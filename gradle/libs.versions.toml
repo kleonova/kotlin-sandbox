@@ -1,0 +1,25 @@
+[versions]
+kotlin = "2.1.21"
+ktor = "2.3.13"
+logback = "1.4.7"
+kotest = "5.8.1"
+serialization-json = "1.6.3"
+kotlinx-datetime = "0.6.0"
+ktlint = "11.6.1"
+
+[libraries]
+# Ktor
+ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
+ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
+ktor-server-auth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" }
+
+# Logging
+logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+
+# Kotest (тесты)
+kotest-runner = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+
+# Serialization
+serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization-json" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+
