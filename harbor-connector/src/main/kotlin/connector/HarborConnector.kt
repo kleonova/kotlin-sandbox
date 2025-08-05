@@ -8,9 +8,14 @@ import io.ktor.client.plugins.auth.providers.BasicAuthCredentials
 import io.ktor.client.plugins.auth.providers.basic
 import io.ktor.client.request.get
 import io.ktor.client.request.head
+import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.header
+import io.ktor.client.statement.HttpResponse
+import io.ktor.http.HttpMethod
 import kotlinx.coroutines.runBlocking
-import lev.learn.sandbox.harbor.connector.model.HarborConnectorRequest
-import lev.learn.sandbox.harbor.connector.model.HarborConnectorResponse
+import lev.learn.sandbox.harbor.connector.model.DockerRequest
+import lev.learn.sandbox.harbor.connector.model.DockerRequestHeader
+import lev.learn.sandbox.harbor.connector.model.DockerResponse
 import org.slf4j.LoggerFactory
 
 class HarborConnector {
@@ -36,27 +41,60 @@ class HarborConnector {
         }
     }
 
-    fun requestHead(req: HarborConnectorRequest.Head): HarborConnectorResponse = runBlocking {
-        val response = client.head("$harborUrl/v2/${req.path}")
-        logger.info("Connector: HEAD ${req.path} | response ${response.status}")
-        HarborConnectorResponse(response)
-    }
+    // Обобщённый метод для выполнения запроса
+    private suspend fun <T : DockerRequest> executeRequest(
+        request: T,
+        method: HttpMethod,
+        actionName: String,
+        configure: HttpRequestBuilder.() -> Unit = {}
+    ): DockerResponse {
+        val fullPath = "$harborUrl/v2/${request.path}"
+        val logPrefix = "Connector: $actionName ${request.path}"
 
-    fun requestManifest(req: HarborConnectorRequest.Manifest): HarborConnectorResponse = runBlocking {
-        val response = client.get("$harborUrl/v2/${req.path}")
-        logger.info("Connector: GET manifest ${req.path} | status: ${response.status}")
-        HarborConnectorResponse(response)
-    }
+        return try {
+            logger.info("$logPrefix | initiating request")
 
-    fun requestBlob(req: HarborConnectorRequest.Blob): HarborConnectorResponse = runBlocking {
-        logger.info("Connector: start GET blob ${req.path}")
-        try {
-            val response = client.get("$harborUrl/v2/${req.path}")
-            logger.info("Connector finish: GET blob ${req.path} | status: ${response.status}")
-            HarborConnectorResponse(response, stream = true)
+            val response: HttpResponse = when (method) {
+                HttpMethod.Get -> client.get(fullPath, configure)
+                HttpMethod.Head -> client.head(fullPath, configure)
+                else -> throw IllegalArgumentException("Unsupported HTTP method: $method")
+            }
+
+            logger.info("$logPrefix | finished with status: ${response.status}")
+            DockerResponse(response, stream = (request is DockerRequest.Blob))
         } catch (e: Exception) {
-            logger.error("Connector error: GET blob ${req.path} failed", e)
+            logger.error("$logPrefix failed", e)
             throw e
+        }
+    }
+
+    // Настройка заголовков + логирование
+    private fun HttpRequestBuilder.withHeaders(headers: List<DockerRequestHeader>) {
+        headers.forEach { header ->
+            val logMsg = "${header.key} - ${header.value}"
+            when (header.key.lowercase()) {
+                "authorization" -> logger.debug("Request header (hidden): ${header.key} - ***")
+                else -> logger.debug("Request header: $logMsg")
+            }
+            header(header.key, header.value)
+        }
+    }
+
+    fun requestHead(req: DockerRequest.Head): DockerResponse = runBlocking {
+        executeRequest(req, HttpMethod.Head, "HEAD") {
+            withHeaders(req.headers)
+        }
+    }
+
+    fun requestManifest(req: DockerRequest.Manifest): DockerResponse = runBlocking {
+        executeRequest(req, HttpMethod.Get, "GET manifest") {
+            withHeaders(req.headers)
+        }
+    }
+
+    fun requestBlob(req: DockerRequest.Blob): DockerResponse = runBlocking {
+        executeRequest(req, HttpMethod.Get, "GET blob") {
+            withHeaders(req.headers)
         }
     }
 }

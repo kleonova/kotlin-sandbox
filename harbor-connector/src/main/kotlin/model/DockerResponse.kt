@@ -11,7 +11,7 @@ import io.ktor.utils.io.jvm.javaio.copyTo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class HarborConnectorResponse (
+class DockerResponse (
     private val response: HttpResponse,
     private val stream: Boolean = false
 ) {
