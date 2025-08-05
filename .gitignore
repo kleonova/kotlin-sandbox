@@ -1,5 +1,10 @@
-.gradle
 build/
+
+### Gradle ###
+.gradle
+gradlew
+gradlew.bat
+gradle/wrapper
 
 ### IntelliJ IDEA ###
 .idea
