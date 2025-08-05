@@ -7,3 +7,11 @@ allprojects {
         mavenCentral()
     }
 }
+
+subprojects {
+    apply(plugin = "org.jetbrains.kotlin.jvm")
+
+    dependencies {
+        // implementation(mylibs.logback)
+    }
+}

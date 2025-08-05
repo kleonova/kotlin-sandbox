@@ -6,6 +6,7 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.routing.*
 import io.ktor.server.response.*
+import lev.learn.sandbox.harbor.connector.route.harborConnectorRoutes
 
 fun main() {
     val config = ApplicationConfig("application.conf")
@@ -16,6 +17,8 @@ fun main() {
             get("/") {
                 call.respondText("Harbor Connector Service is running!")
             }
+
+            harborConnectorRoutes()
         }
     }.start(wait = true)
 }

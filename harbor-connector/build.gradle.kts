@@ -10,7 +10,11 @@ version = "unspecified"
 dependencies {
     implementation(mylibs.ktor.server.core)
     implementation(mylibs.ktor.server.netty)
+    implementation(mylibs.ktor.server.call.logging)
     implementation(mylibs.ktor.server.auth)
+    implementation(mylibs.ktor.client.core)
+    implementation(mylibs.ktor.client.cio)
+    implementation(mylibs.ktor.client.auth)
     implementation(mylibs.logback)
 
     testImplementation(mylibs.kotest.runner)
