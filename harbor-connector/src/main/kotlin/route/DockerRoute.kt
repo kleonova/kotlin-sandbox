@@ -46,14 +46,6 @@ fun Route.harborConnectorRoutes() {
                 else -> error("Unsupported")
             }
 
-
-
-            /*response.response.headers.forEach { key, values ->
-                    values.forEach { value ->
-                        call.response.headers.append(key, value, safeOnly = false)
-                    }
-            }*/
-
             dockerResponse.respondTo(call)
         }
     }

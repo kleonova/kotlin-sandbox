@@ -7,17 +7,18 @@ import io.ktor.http.HttpHeaders
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.response.respondBytes
 import io.ktor.server.response.respondOutputStream
+import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.jvm.javaio.copyTo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class DockerResponse (
+open class DockerResponse (
     private val response: HttpResponse,
     private val stream: Boolean = false
 ) {
     private val dispatcher = Dispatchers.IO
 
-    suspend fun respondTo(call: ApplicationCall) {
+    open suspend fun respondTo(call: ApplicationCall) {
         response.headers.forEach { key, values ->
             if (!key.equals(HttpHeaders.ContentLength, ignoreCase = true)) {
                 values.forEach { value ->
@@ -25,7 +26,6 @@ class DockerResponse (
                 }
             }
         }
-
 
         if (stream) {
             val channel = response.bodyAsChannel()
@@ -38,6 +38,23 @@ class DockerResponse (
         } else {
             val bytes = response.readBytes()
             call.respondBytes(bytes, status = response.status)
+        }
+    }
+
+    open suspend fun rawBodyChannel(): ByteReadChannel = response.bodyAsChannel()
+
+    companion object {
+        fun DockerResponse.contentLengthOrThrow(): Long {
+            val value: String = response.headers[HttpHeaders.ContentLength]
+                ?: error("Content-Length not found in HEAD response")
+
+
+            val value2: String = response.headers["Content-Length"] ?: error("Content-Length not found in HEAD response")
+
+            println("!! contentLength = $value VS $value2")
+
+            return value.toLongOrNull()
+                ?: error("Invalid Content-Length: $value")
         }
     }
 }

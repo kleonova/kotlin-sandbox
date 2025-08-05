@@ -1,11 +1,23 @@
 package lev.learn.sandbox.harbor.connector.model
 
 sealed class DockerRequest(
-    val path: String,
-    val headers: List<DockerRequestHeader> = emptyList<DockerRequestHeader>()
+    open val path: String,
+    open val headers: List<DockerRequestHeader> = emptyList()
 ) {
-    class Head(path: String, headers: List<DockerRequestHeader>) : DockerRequest(path, headers)
-    class Manifest(path: String, headers: List<DockerRequestHeader>) : DockerRequest(path, headers)
-    class Blob(path: String, headers: List<DockerRequestHeader>) : DockerRequest(path, headers)
+    data class Head(
+        override val path: String,
+        override val headers: List<DockerRequestHeader> = emptyList()
+    ) : DockerRequest(path, headers)
+
+    data class Manifest(
+        override val path: String,
+        override val headers: List<DockerRequestHeader> = emptyList()
+    ) : DockerRequest(path, headers)
+
+    data class Blob(
+        override val path: String,
+        override val headers: List<DockerRequestHeader> = emptyList()
+    ) : DockerRequest(path, headers)
 }
+
 

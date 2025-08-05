@@ -49,7 +49,7 @@ class HarborConnector {
         configure: HttpRequestBuilder.() -> Unit = {}
     ): DockerResponse {
         val fullPath = "$harborUrl/v2/${request.path}"
-        val logPrefix = "Connector: $actionName ${request.path}"
+        val logPrefix = "Connector: $actionName $fullPath"
 
         return try {
             logger.info("$logPrefix | initiating request")
@@ -61,6 +61,12 @@ class HarborConnector {
             }
 
             logger.info("$logPrefix | finished with status: ${response.status}")
+
+            response.headers.forEach { key, values ->
+                logger.debug("Response header: $key - ${values.joinToString(",")}")
+            }
+
+
             DockerResponse(response, stream = (request is DockerRequest.Blob))
         } catch (e: Exception) {
             logger.error("$logPrefix failed", e)
