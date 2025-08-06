@@ -1,10 +1,10 @@
 package lev.learn.sandbox.harbor.connector.service
 
 import lev.learn.sandbox.harbor.connector.connector.HarborConnector
-import lev.learn.sandbox.harbor.connector.model.ChunkedDockerResponse
 import lev.learn.sandbox.harbor.connector.model.DockerRequest
 import lev.learn.sandbox.harbor.connector.model.DockerResponse
-import lev.learn.sandbox.harbor.connector.model.DockerResponse.Companion.contentLengthOrThrow
+import lev.learn.sandbox.harbor.connector.model.DockerResponseChunked
+
 import org.slf4j.LoggerFactory
 
 class DockerService {
@@ -21,37 +21,44 @@ class DockerService {
         return connector.requestManifest(req)
     }
 
-    fun forwardBlob(req: DockerRequest.Blob): DockerResponse {
-        val chunkSize = 1 * 1024 * 1024L
-        val maxBlobSize = 2 * 1024 * 1024L
+    suspend fun downloadBlob(request: DockerRequest.Blob): DockerResponse {
+        val firstResponse = connector.requestBlob(request)
 
-        logger.info("Service: forwardBlob $req")
+        val contentRange = firstResponse.contentRangeOrNull()
+        val statusCode = firstResponse.statusCode()
 
-        // 1. HEAD-запрос, чтобы узнать размер blob
-        val headResponse = connector.requestHead(DockerRequest.Head(req.path, req.headers))
-        val contentLength = headResponse.contentLengthOrThrow()
-
-        logger.info("Blob size : $contentLength bytes for ${req.path}")
-
-        if (contentLength < maxBlobSize) {
-            return connector.requestBlob(req)
+        // 1. Ошибка
+        if (statusCode !in listOf(200, 206)) {
+            return firstResponse // можно обернуть в ошибку/response
         }
 
-        // 2. Делим на чанки
-        val ranges: List<String> = (0 until contentLength step chunkSize).map { start ->
-            val end = minOf(start + chunkSize - 1, contentLength - 1)
-            "bytes=$start-$end"
+        // 2. Нет Content-Range → отдаем как есть
+        if (contentRange == null) {
+            return firstResponse
         }
 
-        ranges.forEach {
-            println("!!! $it => ${req.path}")
+        // 3. Если вся длина уже получена → отдаем как есть
+        val (start, end, total) = contentRange
+        println("!! $start, $end, $total for ${request.path}")
+        if (end + 1 >= total) {
+            return firstResponse
         }
 
-        // 3. Возвращаем специальный DockerResponse, который будет объединять чанки потоком
-        return ChunkedDockerResponse(
-            ranges = ranges,
-            baseRequest = req,
-            connector = connector
-        )
+        // 4. Иначе — нужно дозагружать чанками
+        firstResponse.discard() // не читаем его, освобождаем
+
+        val ranges: List<String> = generateRanges(end + 1, total)
+        return DockerResponseChunked(ranges, request, connector)
+    }
+
+    fun generateRanges(start: Long, total: Long, chunkSize: Long = 1L * 1024 * 1024): List<String> {
+        val ranges = mutableListOf<String>()
+        var current = start
+        while (current < total) {
+            val end = (current + chunkSize - 1).coerceAtMost(total - 1)
+            ranges += "bytes=$current-$end"
+            current = end + 1
+        }
+        return ranges
     }
 }

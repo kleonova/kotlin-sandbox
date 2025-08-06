@@ -11,6 +11,7 @@ import io.ktor.server.routing.route
 import org.slf4j.LoggerFactory
 import lev.learn.sandbox.harbor.connector.controller.DockerController
 import lev.learn.sandbox.harbor.connector.model.DockerRequest
+import lev.learn.sandbox.harbor.connector.model.DockerResponseSimple
 
 private val logger = LoggerFactory.getLogger("HarborConnectorRoute")
 
@@ -26,7 +27,7 @@ fun Route.harborConnectorRoutes() {
         head("{path...}") {
             logger.info("Route HEAD: ${call.request.path()}")
             val request = controller.buildRequest(call, "HEAD") as DockerRequest.Head
-            val response = controller.handleHead(request)
+            val response = controller.handleHead(request) as DockerResponseSimple
             response.respondTo(call)
         }
 
@@ -44,7 +45,7 @@ fun Route.harborConnectorRoutes() {
                 is DockerRequest.Manifest -> controller.handleManifest(req)
                 is DockerRequest.Blob -> controller.handleBlob(req)
                 else -> error("Unsupported")
-            }
+            } as DockerResponseSimple
 
             dockerResponse.respondTo(call)
         }

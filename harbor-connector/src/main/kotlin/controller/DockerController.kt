@@ -39,8 +39,8 @@ class DockerController {
         return service.forwardManifest(req)
     }
 
-    fun handleBlob(req: DockerRequest.Blob): DockerResponse {
+    suspend fun handleBlob(req: DockerRequest.Blob): DockerResponse {
         logger.info("Controller: handleBlob $req")
-        return service.forwardBlob(req)
+        return service.downloadBlob(req)
     }
 }

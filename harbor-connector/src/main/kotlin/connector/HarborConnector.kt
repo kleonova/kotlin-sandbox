@@ -16,6 +16,7 @@ import kotlinx.coroutines.runBlocking
 import lev.learn.sandbox.harbor.connector.model.DockerRequest
 import lev.learn.sandbox.harbor.connector.model.DockerRequestHeader
 import lev.learn.sandbox.harbor.connector.model.DockerResponse
+import lev.learn.sandbox.harbor.connector.model.DockerResponseSimple
 import org.slf4j.LoggerFactory
 
 class HarborConnector {
@@ -67,7 +68,7 @@ class HarborConnector {
             }
 
 
-            DockerResponse(response, stream = (request is DockerRequest.Blob))
+            DockerResponseSimple(response, stream = (request is DockerRequest.Blob))
         } catch (e: Exception) {
             logger.error("$logPrefix failed", e)
             throw e
