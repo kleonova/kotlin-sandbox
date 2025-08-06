@@ -3,7 +3,10 @@ package lev.learn.sandbox.harbor.connector.model
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.readBytes
+import io.ktor.http.Headers
+import io.ktor.http.HeadersBuilder
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.response.respondBytes
 import io.ktor.server.response.respondOutputStream
@@ -14,7 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class DockerResponseSimple(
-    private val response: HttpResponse,
+     val response: HttpResponse,
     private val stream: Boolean = false
 ) : DockerResponse() {
 
@@ -42,26 +45,52 @@ class DockerResponseSimple(
         }
     }
 
-    suspend fun respondTo(call: ApplicationCall) {
+    override suspend fun respondTo(call: ApplicationCall) {
+        val statusCode = if (response.status == HttpStatusCode.PartialContent) {
+            HttpStatusCode.OK
+        } else {
+            response.status
+        }
+
+        // Собираем заголовки, исключая Content-Range и Content-Length
+        val headersBuilder = HeadersBuilder()
+
         response.headers.forEach { key, values ->
-            if (!key.equals(HttpHeaders.ContentLength, ignoreCase = true)) {
+            val lowerKey = key.lowercase()
+            if (lowerKey != HttpHeaders.ContentRange.lowercase() &&
+                lowerKey != HttpHeaders.ContentLength.lowercase()
+            ) {
                 values.forEach { value ->
-                    call.response.headers.append(key, value, safeOnly = false)
+                    headersBuilder.append(key, value)
                 }
             }
         }
 
-        if (stream) {
+        if (!stream) {
+            val bytes = response.readBytes()
+            headersBuilder[HttpHeaders.ContentLength] = bytes.size.toString()
+            call.setHeaders(headersBuilder.build())
+            call.respondBytes(bytes, status = statusCode)
+        } else {
             val channel = response.bodyAsChannel()
-
-            call.respondOutputStream(status = response.status) {
+            response.headers[HttpHeaders.ContentLength]?.toLongOrNull()?.let {
+                headersBuilder[HttpHeaders.ContentLength] = it.toString()
+            }
+            call.setHeaders(headersBuilder.build())
+            call.respondOutputStream(status = statusCode) {
                 withContext(Dispatchers.IO) {
                     channel.copyTo(this@respondOutputStream)
                 }
             }
-        } else {
-            val bytes = response.readBytes()
-            call.respondBytes(bytes, status = response.status)
         }
     }
+
+    private fun ApplicationCall.setHeaders(headers: Headers) {
+        headers.forEach { key, values ->
+            values.forEach { value ->
+                this.response.headers.append(key, value)
+            }
+        }
+    }
+
 }

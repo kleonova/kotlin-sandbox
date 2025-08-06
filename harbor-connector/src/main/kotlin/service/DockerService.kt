@@ -2,6 +2,7 @@ package lev.learn.sandbox.harbor.connector.service
 
 import lev.learn.sandbox.harbor.connector.connector.HarborConnector
 import lev.learn.sandbox.harbor.connector.model.DockerRequest
+import lev.learn.sandbox.harbor.connector.model.DockerRequestHeader
 import lev.learn.sandbox.harbor.connector.model.DockerResponse
 import lev.learn.sandbox.harbor.connector.model.DockerResponseChunked
 
@@ -22,7 +23,13 @@ class DockerService {
     }
 
     suspend fun downloadBlob(request: DockerRequest.Blob): DockerResponse {
-        val firstResponse = connector.requestBlob(request)
+        // 0. Устанавливаем Range в запросе
+        val firstRangeHeader = DockerRequestHeader("Range", "bytes=0-${CHUNK_SIZE - 1}")
+        val rangedRequest = request.copy(
+            headers = request.headers + firstRangeHeader
+        )
+
+        val firstResponse = connector.requestBlob(rangedRequest)
 
         val contentRange = firstResponse.contentRangeOrNull()
         val statusCode = firstResponse.statusCode()
@@ -34,31 +41,38 @@ class DockerService {
 
         // 2. Нет Content-Range → отдаем как есть
         if (contentRange == null) {
+            println("!! Нет Content-Range → отдаем как есть ${request.path}")
             return firstResponse
         }
 
         // 3. Если вся длина уже получена → отдаем как есть
         val (start, end, total) = contentRange
         println("!! $start, $end, $total for ${request.path}")
+
         if (end + 1 >= total) {
+            println("!! Полностью получен, отдаем как есть ${request.path}")
             return firstResponse
         }
 
         // 4. Иначе — нужно дозагружать чанками
         firstResponse.discard() // не читаем его, освобождаем
 
-        val ranges: List<String> = generateRanges(end + 1, total)
+        val ranges: List<String> = generateRanges(0, total) // end + 1
         return DockerResponseChunked(ranges, request, connector)
     }
 
-    fun generateRanges(start: Long, total: Long, chunkSize: Long = 1L * 1024 * 1024): List<String> {
+    fun generateRanges(start: Long, total: Long): List<String> {
         val ranges = mutableListOf<String>()
         var current = start
         while (current < total) {
-            val end = (current + chunkSize - 1).coerceAtMost(total - 1)
+            val end = (current + CHUNK_SIZE - 1).coerceAtMost(total - 1)
             ranges += "bytes=$current-$end"
             current = end + 1
         }
         return ranges
+    }
+
+    companion object {
+        const val CHUNK_SIZE = 100L * 1024 * 1024 // 100mb
     }
 }

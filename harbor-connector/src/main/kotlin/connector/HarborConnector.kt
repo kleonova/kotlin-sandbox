@@ -11,6 +11,7 @@ import io.ktor.client.request.head
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.header
 import io.ktor.client.statement.HttpResponse
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import kotlinx.coroutines.runBlocking
 import lev.learn.sandbox.harbor.connector.model.DockerRequest
@@ -100,7 +101,13 @@ class HarborConnector {
     }
 
     fun requestBlob(req: DockerRequest.Blob): DockerResponse = runBlocking {
-        executeRequest(req, HttpMethod.Get, "GET blob") {
+
+        val headers = req.headers
+            .filterNot { it.key == HttpHeaders.AcceptEncoding }
+
+
+
+        executeRequest(req.copy(headers = headers), HttpMethod.Get, "GET blob") {
             withHeaders(req.headers)
         }
     }

@@ -11,6 +11,7 @@ import io.ktor.server.routing.route
 import org.slf4j.LoggerFactory
 import lev.learn.sandbox.harbor.connector.controller.DockerController
 import lev.learn.sandbox.harbor.connector.model.DockerRequest
+import lev.learn.sandbox.harbor.connector.model.DockerResponseChunked
 import lev.learn.sandbox.harbor.connector.model.DockerResponseSimple
 
 private val logger = LoggerFactory.getLogger("HarborConnectorRoute")
@@ -45,7 +46,15 @@ fun Route.harborConnectorRoutes() {
                 is DockerRequest.Manifest -> controller.handleManifest(req)
                 is DockerRequest.Blob -> controller.handleBlob(req)
                 else -> error("Unsupported")
-            } as DockerResponseSimple
+            }
+
+                // если DockerResponseSimple ставить 200 -> 200, 206 -> 200, выставлять корректно contentLength и удалять  Content-Range
+                // клиент ругается на unknown: invalid range
+            when (dockerResponse) {
+                is DockerResponseSimple -> println("!! is DockerResponseSimple for ${req.path}")
+                is DockerResponseChunked -> println("!! is DockerResponseChunked for ${req.path}")
+                else -> error("Unsupported")
+            }
 
             dockerResponse.respondTo(call)
         }
