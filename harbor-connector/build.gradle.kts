@@ -16,6 +16,7 @@ dependencies {
     implementation(mylibs.ktor.client.cio)
     implementation(mylibs.ktor.client.auth)
     implementation(mylibs.logback)
+    implementation(mylibs.typesafe.config)
 
     testImplementation(mylibs.kotest.runner)
 }

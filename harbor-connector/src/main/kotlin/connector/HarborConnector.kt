@@ -14,6 +14,7 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import kotlinx.coroutines.runBlocking
+import lev.learn.sandbox.harbor.connector.config.ConfigLoader
 import lev.learn.sandbox.harbor.connector.model.DockerRequest
 import lev.learn.sandbox.harbor.connector.model.DockerRequestHeader
 import lev.learn.sandbox.harbor.connector.response.DockerResponse
@@ -21,14 +22,20 @@ import lev.learn.sandbox.harbor.connector.response.DockerResponseBase
 import org.slf4j.LoggerFactory
 
 class HarborConnector {
-    private val harborUrl = "http://harbor.local:8088"
-    private val harborLogin = "admin"
-    private val harborPassword = "Harbor12345"
+    private companion object {
+        private val config by lazy { ConfigLoader.loadHarborConfig() }
+
+        private val harborUrl = config.baseUrl
+        private val harborLogin = config.user
+        private val harborPassword = config.password
+        private val requestTimeout = config.requestTimeoutMs
+    }
+
 
     private val logger = LoggerFactory.getLogger("HarborConnector")
     private val client = HttpClient(CIO) {
         install(HttpTimeout) {
-            requestTimeoutMillis = HttpTimeout.INFINITE_TIMEOUT_MS // 0 = бесконечно
+            requestTimeoutMillis = requestTimeout // 0 = бесконечно, HttpTimeout.INFINITE_TIMEOUT_MS
             connectTimeoutMillis = 30_000 // подключение 30 сек
             socketTimeoutMillis = HttpTimeout.INFINITE_TIMEOUT_MS // читаем сколько угодно
         }
@@ -44,6 +51,9 @@ class HarborConnector {
     }
 
     // Обобщённый метод для выполнения запроса
+    // todo доработать механизм обработки ошибок с Retry
+    //  если запрос выполнен с ошибкой 400, 401, 403, 404 - записать лог и отдать ошибку
+    //  если запрос выполнен с прерываением, то сделать повторный запрос - ввести переменную ограничивающую число повторов
     private suspend fun <T : DockerRequest> executeRequest(
         request: T,
         method: HttpMethod,
@@ -101,11 +111,8 @@ class HarborConnector {
     }
 
     fun requestBlob(req: DockerRequest.Blob): DockerResponse = runBlocking {
-
         val headers = req.headers
             .filterNot { it.key == HttpHeaders.AcceptEncoding }
-
-
 
         executeRequest(req.copy(headers = headers), HttpMethod.Get, "GET blob") {
             withHeaders(req.headers)

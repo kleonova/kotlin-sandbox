@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
+import lev.learn.sandbox.harbor.connector.config.ConfigLoader
 import lev.learn.sandbox.harbor.connector.connector.HarborConnector
 import lev.learn.sandbox.harbor.connector.model.DockerRequest
 import lev.learn.sandbox.harbor.connector.model.DockerRequestHeader
@@ -26,7 +27,8 @@ class DockerResponseChunked(
     private val logger = LoggerFactory.getLogger("DockerResponseChunked")
 
     private companion object {
-        const val CHUNK_PREFETCH_COUNT = 3 // сколько чанков загружать параллельно
+        private val config by lazy { ConfigLoader.loadChunkConfig() }
+        private val prefetchCount = config.prefetchCount
     }
 
     override fun statusCode(): Int = 206 // Partial Content
@@ -75,7 +77,7 @@ class DockerResponseChunked(
                             emit(deferred)
                         }
                     }
-                        .buffer(CHUNK_PREFETCH_COUNT)
+                        .buffer(prefetchCount)
                         .mapNotNull { deferred ->
                             runCatching {
                                 deferred.await().let { (range, response) ->

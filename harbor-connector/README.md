@@ -22,6 +22,7 @@
 
 ```
 docker pull host.docker.internal:9001/docker-hub/nginx
+docker pull host.docker.internal:9001/docker-hub/matomo
 docker pull host.docker.internal:9001/docker-hub/sonarqube:latest
 ```
 
