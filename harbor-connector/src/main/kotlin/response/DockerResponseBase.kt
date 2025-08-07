@@ -15,11 +15,21 @@ import io.ktor.utils.io.cancel
 import io.ktor.utils.io.jvm.javaio.copyTo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.slf4j.LoggerFactory
 
 class DockerResponseBase(
      val response: HttpResponse,
     private val stream: Boolean = false
 ) : DockerResponse() {
+    private val logger = LoggerFactory.getLogger("DockerResponseBase")
+
+    private companion object {
+        val PROHIBITED_HEADERS = setOf(
+            HttpHeaders.TransferEncoding,
+            HttpHeaders.ContentLength,
+            HttpHeaders.Connection,
+        )
+    }
 
     override fun statusCode(): Int = response.status.value
 
@@ -83,8 +93,12 @@ class DockerResponseBase(
 
     private fun ApplicationCall.setHeaders(headers: Headers) {
         headers.forEach { key, values ->
-            values.forEach { value ->
-                this.response.headers.append(key, value)
+            if (key !in PROHIBITED_HEADERS) {
+                values.forEach { value ->
+                    this.response.headers.append(key, value)
+                }
+            } else {
+                logger.trace("Пропускаем управляемый заголовок: $key")
             }
         }
     }

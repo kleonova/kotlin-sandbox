@@ -25,6 +25,10 @@ class DockerResponseChunked(
 ) : DockerResponse() {
     private val logger = LoggerFactory.getLogger("DockerResponseChunked")
 
+    private companion object {
+        const val CHUNK_PREFETCH_COUNT = 3 // сколько чанков загружать параллельно
+    }
+
     override fun statusCode(): Int = 206 // Partial Content
 
     override fun contentRangeOrNull(): Triple<Long, Long, Long>? = null
@@ -51,7 +55,7 @@ class DockerResponseChunked(
                     // 2. Создаём поток чанков (асинхронно)
                     val chunkFlow = flow {
                         ranges.forEach { range ->
-                            logger.debug("Запрашиваем чанк: $range")
+                            logger.debug("Запрашиваем чанк: $range для ${baseRequest.path}")
                             val reqWithRange = baseRequest.copy(
                                 headers = baseRequest.headers + DockerRequestHeader(HttpHeaders.Range, range)
                             )
@@ -71,15 +75,15 @@ class DockerResponseChunked(
                             emit(deferred)
                         }
                     }
-                        .buffer(3) // 🔥 Загружаем до 3 чанков вперед (конфигурируем буфер)
+                        .buffer(CHUNK_PREFETCH_COUNT)
                         .mapNotNull { deferred ->
                             runCatching {
                                 deferred.await().let { (range, response) ->
-                                    logger.debug("Чанк получен: $range")
+                                    logger.debug("Чанк получен: $range для ${baseRequest.path}")
                                     response to response.body()
                                 }
                             }.onFailure { ex ->
-                                logger.error("Ошибка при загрузке чанка: $ex")
+                                logger.error("Ошибка при загрузке чанка для ${baseRequest.path}: $ex")
                                 // Можно попробовать повторить или прервать
                             }.getOrNull()
                         }
@@ -92,7 +96,7 @@ class DockerResponseChunked(
                             body.cancel()
                             response.discard()
                         }
-                        logger.debug("Чанк записан и освобождён")
+                        logger.debug("Чанк для ${baseRequest.path} записан и освобождён")
                     }
                 }
             }
