@@ -25,7 +25,7 @@ class HarborConnector {
     private val harborLogin = "admin"
     private val harborPassword = "Harbor12345"
 
-    private val logger = LoggerFactory.getLogger("DockerConnector")
+    private val logger = LoggerFactory.getLogger("HarborConnector")
     private val client = HttpClient(CIO) {
         install(HttpTimeout) {
             requestTimeoutMillis = HttpTimeout.INFINITE_TIMEOUT_MS // 0 = бесконечно

@@ -22,7 +22,7 @@ class DockerService {
         return connector.requestManifest(req)
     }
 
-    suspend fun downloadBlob(request: DockerRequest.Blob): DockerResponse {
+    fun downloadBlob(request: DockerRequest.Blob): DockerResponse {
         // 0. Устанавливаем Range в запросе
         val firstRangeHeader = DockerRequestHeader("Range", "bytes=0-${CHUNK_SIZE - 1}")
         val rangedRequest = request.copy(
@@ -55,10 +55,11 @@ class DockerService {
         }
 
         // 4. Иначе — нужно дозагружать чанками
-        firstResponse.discard() // не читаем его, освобождаем
+        // firstResponse.discard() // не читаем его, освобождаем
+        // вместо этого отдаем в ответ
 
-        val ranges: List<String> = generateRanges(0, total) // end + 1
-        return DockerResponseChunked(ranges, request, connector)
+        val ranges: List<String> = generateRanges(end + 1, total)
+        return DockerResponseChunked(firstResponse, ranges, request, connector)
     }
 
     fun generateRanges(start: Long, total: Long): List<String> {
@@ -73,6 +74,6 @@ class DockerService {
     }
 
     companion object {
-        const val CHUNK_SIZE = 100L * 1024 * 1024 // 100mb
+        const val CHUNK_SIZE = 10L * 1024 * 1024 // 10mb
     }
 }

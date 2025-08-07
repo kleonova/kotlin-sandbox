@@ -3,13 +3,17 @@ package lev.learn.sandbox.harbor.connector.model
 import io.ktor.utils.io.*
 import kotlinx.coroutines.*
 import io.ktor.http.*
+import io.ktor.http.content.OutgoingContent
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.request.path
+import io.ktor.server.response.header
+import io.ktor.server.response.respond
 import io.ktor.server.response.respondOutputStream
 import io.ktor.utils.io.jvm.javaio.copyTo
 import lev.learn.sandbox.harbor.connector.connector.HarborConnector
 
 class DockerResponseChunked(
+    private val firstResponse: DockerResponse,
     private val ranges: List<String>,
     private val baseRequest: DockerRequest.Blob,
     private val connector: HarborConnector
@@ -65,42 +69,43 @@ class DockerResponseChunked(
     }
 
     override suspend fun respondTo(call: ApplicationCall) {
-        call.respondOutputStream(
-            contentType = ContentType.Application.OctetStream,
-            status = HttpStatusCode.PartialContent
-        ) {
-            for (range in ranges) {
-                println("!! DockerResponseChunked request $range for ${call.request.path()}")
+        call.respond(object : OutgoingContent.WriteChannelContent() {
+            override val contentType = ContentType.Application.OctetStream
+            override val status = HttpStatusCode.PartialContent
 
-                val reqWithRange = baseRequest.copy(
-                    headers = baseRequest.headers + DockerRequestHeader(HttpHeaders.Range, range)
-                )
-
-                val response: DockerResponseSimple = connector.requestBlob(reqWithRange)
-                        as? DockerResponseSimple
-                    ?: error("Expected DockerResponseSimple")
-
-                println(">> Got response with status ${response.statusCode()} and headers: ${response.response.headers}")
-
-                if (response.statusCode() != HttpStatusCode.PartialContent.value) {
-                    error("Expected 206 Partial Content, got ${response.statusCode()}")
-                }
-                
-                val expected = response.response.headers[HttpHeaders.ContentLength]?.toLongOrNull()
-                println(">> point 0 ")
-
-                val copied = response.body().copyTo(this)
-
-                println(">> copied $copied bytes from $range, expected $expected")
-
-                if (expected != null && copied != expected) {
-                    error("Mismatch: copied $copied of $expected from $range")
+            override suspend fun writeTo(channel: ByteWriteChannel) {
+                // 1. Отправляем первый чанк
+                val firstBody = firstResponse.body()
+                try {
+                    firstBody.copyTo(channel)
+                } finally {
+                    firstBody.cancel() // освобождаем ресурсы
                 }
 
-                // discard — ТОЛЬКО если body() ещё не прочитан до конца (что не наш случай)
-                // response.discard() // <-- пока убери
+                // 2. Дозагружаем остальные чанки
+                for (range in ranges) {
+                    println("!! DockerResponseChunked request $range for ${baseRequest.path}")
+
+                    val reqWithRange = baseRequest.copy(
+                        headers = baseRequest.headers + DockerRequestHeader(HttpHeaders.Range, range)
+                    )
+
+                    val response = connector.requestBlob(reqWithRange) as? DockerResponseSimple
+                        ?: error("Expected DockerResponseSimple")
+
+                    if (response.statusCode() != HttpStatusCode.PartialContent.value) {
+                        error("Expected 206 Partial Content, got ${response.statusCode()}")
+                    }
+
+                    val chunkBody = response.body()
+                    try {
+                        chunkBody.copyTo(channel)
+                    } finally {
+                        chunkBody.cancel()
+                        response.discard()
+                    }
+                }
             }
-
-        }
+        })
     }
 }
