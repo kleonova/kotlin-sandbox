@@ -3,7 +3,7 @@ package lev.learn.sandbox.harbor.connector.controller
 import io.ktor.server.application.ApplicationCall
 import lev.learn.sandbox.harbor.connector.model.DockerRequest
 import lev.learn.sandbox.harbor.connector.model.DockerRequestHeader
-import lev.learn.sandbox.harbor.connector.model.DockerResponse
+import lev.learn.sandbox.harbor.connector.response.DockerResponse
 import lev.learn.sandbox.harbor.connector.service.DockerService
 import org.slf4j.LoggerFactory
 
@@ -39,7 +39,7 @@ class DockerController {
         return service.forwardManifest(req)
     }
 
-    suspend fun handleBlob(req: DockerRequest.Blob): DockerResponse {
+    fun handleBlob(req: DockerRequest.Blob): DockerResponse {
         logger.info("Controller: handleBlob $req")
         return service.downloadBlob(req)
     }

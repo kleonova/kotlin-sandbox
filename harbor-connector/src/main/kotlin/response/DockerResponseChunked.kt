@@ -1,4 +1,4 @@
-package lev.learn.sandbox.harbor.connector.model
+package lev.learn.sandbox.harbor.connector.response
 
 import io.ktor.utils.io.*
 import io.ktor.http.*
@@ -6,7 +6,10 @@ import io.ktor.http.content.OutgoingContent
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.response.respond
 import lev.learn.sandbox.harbor.connector.connector.HarborConnector
+import lev.learn.sandbox.harbor.connector.model.DockerRequest
+import lev.learn.sandbox.harbor.connector.model.DockerRequestHeader
 import org.slf4j.LoggerFactory
+import kotlin.collections.plus
 
 class DockerResponseChunked(
     private val firstResponse: DockerResponse,
@@ -46,8 +49,8 @@ class DockerResponseChunked(
                         headers = baseRequest.headers + DockerRequestHeader(HttpHeaders.Range, range)
                     )
 
-                    val response = connector.requestBlob(reqWithRange) as? DockerResponseSimple
-                        ?: error("Expected DockerResponseSimple")
+                    val response = connector.requestBlob(reqWithRange) as? DockerResponseBase
+                        ?: error("Expected DockerResponseBase")
 
                     if (response.statusCode() != HttpStatusCode.PartialContent.value) {
                         error("Expected 206 Partial Content, got ${response.statusCode()}")

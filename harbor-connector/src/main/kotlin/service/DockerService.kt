@@ -3,8 +3,8 @@ package lev.learn.sandbox.harbor.connector.service
 import lev.learn.sandbox.harbor.connector.connector.HarborConnector
 import lev.learn.sandbox.harbor.connector.model.DockerRequest
 import lev.learn.sandbox.harbor.connector.model.DockerRequestHeader
-import lev.learn.sandbox.harbor.connector.model.DockerResponse
-import lev.learn.sandbox.harbor.connector.model.DockerResponseChunked
+import lev.learn.sandbox.harbor.connector.response.DockerResponse
+import lev.learn.sandbox.harbor.connector.response.DockerResponseChunked
 
 import org.slf4j.LoggerFactory
 

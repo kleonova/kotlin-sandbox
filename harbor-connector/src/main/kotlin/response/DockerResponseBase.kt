@@ -1,4 +1,4 @@
-package lev.learn.sandbox.harbor.connector.model
+package lev.learn.sandbox.harbor.connector.response
 
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
@@ -16,7 +16,7 @@ import io.ktor.utils.io.jvm.javaio.copyTo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class DockerResponseSimple(
+class DockerResponseBase(
      val response: HttpResponse,
     private val stream: Boolean = false
 ) : DockerResponse() {

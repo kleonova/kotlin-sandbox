@@ -1,4 +1,4 @@
-package lev.learn.sandbox.harbor.connector.model
+package lev.learn.sandbox.harbor.connector.response
 
 import io.ktor.server.application.ApplicationCall
 import io.ktor.utils.io.ByteReadChannel
