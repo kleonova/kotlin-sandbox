@@ -41,23 +41,19 @@ class DockerService {
 
         // 2. Нет Content-Range → отдаем как есть
         if (contentRange == null) {
-            println("!! Нет Content-Range → отдаем как есть ${request.path}")
+            logger.debug("Отсутствует заголовок `Content-Range` в ответе `${request.path}`")
             return firstResponse
         }
 
         // 3. Если вся длина уже получена → отдаем как есть
         val (start, end, total) = contentRange
-        println("!! $start, $end, $total for ${request.path}")
 
         if (end + 1 >= total) {
-            println("!! Полностью получен, отдаем как есть ${request.path}")
+            logger.debug("Размер слоя `${request.path}` не превышает $CHUNK_SIZE")
             return firstResponse
         }
 
         // 4. Иначе — нужно дозагружать чанками
-        // firstResponse.discard() // не читаем его, освобождаем
-        // вместо этого отдаем в ответ
-
         val ranges: List<String> = generateRanges(end + 1, total)
         return DockerResponseChunked(firstResponse, ranges, request, connector)
     }

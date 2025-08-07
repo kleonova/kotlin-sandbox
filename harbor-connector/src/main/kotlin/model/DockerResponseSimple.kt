@@ -35,10 +35,6 @@ class DockerResponseSimple(
 
     override suspend fun body(): ByteReadChannel = response.bodyAsChannel()
 
-    override suspend fun bodyAsChannel(): ByteReadChannel {
-        return if (stream) response.bodyAsChannel() else response.bodyAsChannel().also { discard() }
-    }
-
     override suspend fun discard() {
         if (!stream) {
             response.bodyAsChannel().cancel()
@@ -92,5 +88,4 @@ class DockerResponseSimple(
             }
         }
     }
-
 }
