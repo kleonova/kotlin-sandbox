@@ -16,6 +16,16 @@ object ConfigLoader {
                 harborConfig.getLong("requestTimeoutMs")
             } else {
                 null // используем значение по умолчанию из data class
+            },
+            maxRetries = if (harborConfig.hasPath("maxRetries")) {
+                harborConfig.getInt("maxRetries")
+            } else {
+                HarborConfig.DEFAULT_MAX_RETRIES
+            },
+            delayBetweenRetriesMs = if (harborConfig.hasPath("delayBetweenRetriesMs")) {
+                harborConfig.getLong("delayBetweenRetriesMs")
+            } else {
+                HarborConfig.DEFAULT_DELAY_BETWEEN_RETRIES_MS
             }
         )
     }

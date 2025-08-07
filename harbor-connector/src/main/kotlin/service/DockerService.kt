@@ -30,13 +30,32 @@ class DockerService {
     }
 
     fun downloadBlob(request: DockerRequest.Blob): DockerResponse {
-        // 0. Проверяем, есть ли уже Range в запросе
+        // Проверяем, есть ли уже Range в запросе
         val existingRange = request.headers
             .find { it.key.equals(HttpHeaders.Range, ignoreCase = true) }
             ?.value
 
-        val firstRangeValue = existingRange
-            ?: "bytes=0-${CHUNK_SIZE - 1}" // если нет — начинаем с 0
+        val firstRangeValue = when {
+            existingRange == null -> {
+                // Нет Range — начинаем с 0
+                "bytes=0-${CHUNK_SIZE - 1}"
+            }
+            existingRange.contains("bytes=([^-,]+)-$".toRegex()) -> {
+                // Формат: bytes=12345-  → добавляем конец
+                val startStr = existingRange.substringAfter("bytes=").substringBefore("-")
+                val start = startStr.toLongOrNull()
+                    ?: error("Invalid Range header: start is not a number: $existingRange")
+
+                val end = start + CHUNK_SIZE - 1
+                "bytes=$start-$end"
+            }
+            else -> {
+                // Остальные форматы оставляем как есть:
+                // - bytes=123-456
+                // - bytes=-500
+                existingRange
+            }
+        }
 
         val firstRangeHeader = DockerRequestHeader(HttpHeaders.Range, firstRangeValue)
         val rangedRequest = request.copy(
@@ -48,28 +67,28 @@ class DockerService {
         val contentRange = firstResponse.contentRangeOrNull()
         val statusCode = firstResponse.statusCode()
 
-        // 1. Ошибка
+        // Ошибка
         if (statusCode !in listOf(200, 206)) {
             return firstResponse
         }
 
-        // 2. Нет Content-Range → отдаем как есть (например, 200 OK без пагинации)
+        // Нет Content-Range → отдаем как есть (например, 200 OK без пагинации)
         if (contentRange == null) {
             logger.debug("Отсутствует заголовок `Content-Range` в ответе `${request.path}`")
             return firstResponse
         }
 
-        val (start, end, total) = contentRange
+        val (_, end, total) = contentRange
 
-        // 3. Если уже получили весь диапазон (или бэкенд вернул всё) — возвращаем как есть
+        // Если уже получили весь диапазон (или бэкенд вернул всё) — возвращаем как есть
         if (end + 1 >= total) {
-            logger.debug("Размер слоя `$total` не превышает размер чанка: ($CHUNK_SIZE байт), ${request.path}")
+            logger.debug("Размер слоя `$total` не превышает размер установленной порции: ($CHUNK_SIZE байт), ${request.path}")
             return firstResponse
         }
 
-        // 4. Нужно дозагружать оставшиеся чанки
+        // Нужно дозагружать оставшиеся порции
         val ranges = generateRanges(end + 1, total)
-        logger.debug("Требуется загрузка чанками: ${ranges.size} по $CHUNK_SIZE байт, ${request.path}")
+        logger.debug("Требуется загрузка порциями: ${ranges.size} по $CHUNK_SIZE байт, ${request.path}")
         return DockerResponseChunked(firstResponse, ranges, request, connector)
     }
 

@@ -2,6 +2,7 @@ package lev.learn.sandbox.harbor.connector.connector
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.providers.BasicAuthCredentials
@@ -13,6 +14,9 @@ import io.ktor.client.request.header
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
+import io.ktor.utils.io.errors.IOException
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import lev.learn.sandbox.harbor.connector.config.ConfigLoader
 import lev.learn.sandbox.harbor.connector.model.DockerRequest
@@ -29,6 +33,8 @@ class HarborConnector {
         private val harborLogin = config.user
         private val harborPassword = config.password
         private val requestTimeout = config.requestTimeoutMs
+        private val maxRetries = config.maxRetries
+        private val delayBetweenRetriesMs: Long = config.delayBetweenRetriesMs
     }
 
 
@@ -51,9 +57,6 @@ class HarborConnector {
     }
 
     // Обобщённый метод для выполнения запроса
-    // todo доработать механизм обработки ошибок с Retry
-    //  если запрос выполнен с ошибкой 400, 401, 403, 404 - записать лог и отдать ошибку
-    //  если запрос выполнен с прерываением, то сделать повторный запрос - ввести переменную ограничивающую число повторов
     private suspend fun <T : DockerRequest> executeRequest(
         request: T,
         method: HttpMethod,
@@ -63,26 +66,46 @@ class HarborConnector {
         val fullPath = "$harborUrl/v2/${request.path}"
         val logPrefix = "Connector: $actionName $fullPath"
 
-        return try {
-            logger.info("$logPrefix | initiating request")
+        var attempt = 0
 
-            val response: HttpResponse = when (method) {
-                HttpMethod.Get -> client.get(fullPath, configure)
-                HttpMethod.Head -> client.head(fullPath, configure)
-                else -> throw IllegalArgumentException("Unsupported HTTP method: $method")
+        while (true) {
+            try {
+                logger.info("$logPrefix | attempt ${attempt + 1}")
+
+                val response: HttpResponse = when (method) {
+                    HttpMethod.Get -> client.get(fullPath, configure)
+                    HttpMethod.Head -> client.head(fullPath, configure)
+                    else -> throw IllegalArgumentException("Unsupported HTTP method: $method")
+                }
+
+                val status = response.status.value
+                logger.info("$logPrefix | finished with status: $status")
+
+                response.headers.forEach { key, values ->
+                    logger.debug("Response header: $key - ${values.joinToString(",")}")
+                }
+
+                if (status in listOf(400, 401, 403, 404)) {
+                    logger.error("$logPrefix | client error: $status")
+                    throw ClientRequestException(response, "") // выбрасываем дальше
+                }
+
+                return DockerResponseBase(response, stream = (request is DockerRequest.Blob))
+
+            } catch (e: ClientRequestException) {
+                // Ошибки клиента — не повторяем
+                logger.error("$logPrefix | client error (won't retry)", e)
+                throw e
+            } catch (e: Exception) {
+                if (!shouldRetry(e) || attempt >= maxRetries) {
+                    logger.error("$logPrefix | failed after ${attempt + 1} attempts", e)
+                    throw e
+                }
+
+                logger.warn("$logPrefix | transient error, retrying in ${delayBetweenRetriesMs}ms...", e)
+                delay(delayBetweenRetriesMs)
+                attempt++
             }
-
-            logger.info("$logPrefix | finished with status: ${response.status}")
-
-            response.headers.forEach { key, values ->
-                logger.debug("Response header: $key - ${values.joinToString(",")}")
-            }
-
-
-            DockerResponseBase(response, stream = (request is DockerRequest.Blob))
-        } catch (e: Exception) {
-            logger.error("$logPrefix failed", e)
-            throw e
         }
     }
 
@@ -117,5 +140,9 @@ class HarborConnector {
         executeRequest(req.copy(headers = headers), HttpMethod.Get, "GET blob") {
             withHeaders(req.headers)
         }
+    }
+
+    private fun shouldRetry(e: Throwable): Boolean {
+        return e is IOException || e is TimeoutCancellationException
     }
 }

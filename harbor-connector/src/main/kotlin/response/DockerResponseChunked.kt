@@ -46,7 +46,7 @@ class DockerResponseChunked(
 
             override suspend fun writeTo(channel: ByteWriteChannel) {
                 coroutineScope {
-                    // 1. Отправляем первый чанк (синхронно)
+                    // Отправляем первую порцию данных (синхронно)
                     val firstBody = firstResponse.body()
                     try {
                         firstBody.copyTo(channel)
@@ -54,10 +54,10 @@ class DockerResponseChunked(
                         firstBody.cancel() // Освобождаем ресурсы канала
                     }
 
-                    // 2. Создаём поток чанков (асинхронно)
+                    // Создаём поток порций (асинхронно)
                     val chunkFlow = flow {
                         ranges.forEach { range ->
-                            logger.debug("Запрашиваем чанк: $range для ${baseRequest.path}")
+                            logger.debug("Запрашиваем порцию: $range для ${baseRequest.path}")
                             val reqWithRange = baseRequest.copy(
                                 headers = baseRequest.headers + DockerRequestHeader(HttpHeaders.Range, range)
                             )
@@ -81,16 +81,17 @@ class DockerResponseChunked(
                         .mapNotNull { deferred ->
                             runCatching {
                                 deferred.await().let { (range, response) ->
-                                    logger.debug("Чанк получен: $range для ${baseRequest.path}")
+                                    logger.debug("Порция получена: $range для ${baseRequest.path}")
                                     response to response.body()
                                 }
                             }.onFailure { ex ->
-                                logger.error("Ошибка при загрузке чанка для ${baseRequest.path}: $ex")
-                                // Можно попробовать повторить или прервать
+                                logger.error("Ошибка при загрузке порции для ${baseRequest.path}: $ex")
+                                // todo Можно попробовать повторить или прервать
+                                throw ex
                             }.getOrNull()
                         }
 
-                    // 3. Потребляем и пишем
+                    // Потребляем и пишем
                     chunkFlow.cancellable().collect { (response, body) ->
                         try {
                             body.copyTo(channel)
@@ -98,7 +99,7 @@ class DockerResponseChunked(
                             body.cancel()
                             response.discard()
                         }
-                        logger.debug("Чанк для ${baseRequest.path} записан и освобождён")
+                        logger.debug("Порция для ${baseRequest.path} записана, ресурсы освобождены")
                     }
                 }
             }
