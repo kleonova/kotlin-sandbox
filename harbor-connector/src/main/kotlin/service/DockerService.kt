@@ -35,7 +35,7 @@ class DockerService {
             .find { it.key.equals(HttpHeaders.Range, ignoreCase = true) }
             ?.value
 
-        val firstRangeValue = when {
+        val firstRangeValue: String = when {
             existingRange == null -> {
                 // Нет Range — начинаем с 0
                 "bytes=0-${CHUNK_SIZE - 1}"
@@ -62,7 +62,7 @@ class DockerService {
             headers = request.headers + firstRangeHeader
         )
 
-        val firstResponse = connector.requestBlob(rangedRequest)
+        val firstResponse: DockerResponse = connector.requestBlob(rangedRequest)
 
         val contentRange = firstResponse.contentRangeOrNull()
         val statusCode = firstResponse.statusCode()
@@ -92,7 +92,7 @@ class DockerService {
         return DockerResponseChunked(firstResponse, ranges, request, connector)
     }
 
-    fun generateRanges(start: Long, total: Long): List<String> {
+    private fun generateRanges(start: Long, total: Long): List<String> {
         val ranges = mutableListOf<String>()
         var current = start
         while (current < total) {

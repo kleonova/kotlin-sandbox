@@ -18,10 +18,11 @@ import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
 
 class DockerResponseBase(
-     val response: HttpResponse,
+    private val response: HttpResponse,
     private val stream: Boolean = false
 ) : DockerResponse() {
     private val logger = LoggerFactory.getLogger("DockerResponseBase")
+    private val dispatcher = Dispatchers.IO
 
     private companion object {
         val PROHIBITED_HEADERS = setOf(
@@ -84,7 +85,7 @@ class DockerResponseBase(
             }
             call.setHeaders(headersBuilder.build())
             call.respondOutputStream(status = statusCode) {
-                withContext(Dispatchers.IO) {
+                withContext(dispatcher) {
                     channel.copyTo(this@respondOutputStream)
                 }
             }
