@@ -90,7 +90,6 @@ fun Route.authRoutes(keycloak: KeycloakSettings) {
         call.respondText("Logged out")
     }
 
-    // Достаём email из токена
     authenticate("keycloak-jwt") {
         get("/me") {
             val principal = call.principal<JWTPrincipal>()

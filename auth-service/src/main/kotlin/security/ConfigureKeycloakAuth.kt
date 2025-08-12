@@ -15,14 +15,22 @@ fun Application.configureKeycloakAuth(settings: KeycloakSettings) {
     install(Authentication) {
         jwt("keycloak-jwt") {
             realm = settings.realm
+
             verifier(jwkProvider) {
                 withIssuer(settings.issuerUrl)
-                withAudience(settings.clientId)
+                withAudience("account")
             }
+
             validate { credential ->
-                if (credential.payload.audience.contains(settings.clientId)) {
+                val audienceValid = credential.payload.audience.contains("account")
+                val authorizedParty = credential.payload.getClaim("azp").asString()
+                val clientIdMatch = authorizedParty == settings.clientId
+
+                if (audienceValid && clientIdMatch) {
                     JWTPrincipal(credential.payload)
-                } else null
+                } else {
+                    null
+                }
             }
         }
     }
