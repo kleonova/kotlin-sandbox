@@ -4,25 +4,20 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") // Линтер
 }
 
-group = "lev.learn.sandbox.harbor.connector"
-version = "unspecified"
+group = "lev.learn.sandbox.notification.service"
+version = "0.1"
 
 dependencies {
     implementation(mylibs.ktor.server.core)
     implementation(mylibs.ktor.server.netty)
-    implementation(mylibs.ktor.server.call.logging)
     implementation(mylibs.ktor.server.auth)
-    implementation(mylibs.ktor.client.core)
-    implementation(mylibs.ktor.client.cio)
-    implementation(mylibs.ktor.client.auth)
     implementation(mylibs.logback)
-    implementation(mylibs.typesafe.config)
 
     testImplementation(mylibs.kotest.runner)
 }
 
 application {
-    mainClass.set("lev.learn.sandbox.harbor.connector.ApplicationKt")
+    mainClass.set("lev.learn.sandbox.notification.service.ApplicationKt")
 }
 
 // Настройки Ktlint

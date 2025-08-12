@@ -21,5 +21,8 @@ dependencyResolutionManagement {
     }
 }
 
+// Модули микросервисов
+include("gateway-service")
+include("auth-service")
+include("notification-service")
 include("harbor-connector")
-include("file-receiver")
