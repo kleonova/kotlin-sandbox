@@ -7,6 +7,9 @@ import io.ktor.server.netty.*
 import io.ktor.server.routing.*
 import io.ktor.server.response.*
 import lev.learn.sandbox.auth.service.database.DatabaseFactory
+import lev.learn.sandbox.auth.service.route.authRoutes
+import lev.learn.sandbox.auth.service.security.KeycloakSettings
+import lev.learn.sandbox.auth.service.security.configureKeycloakAuth
 
 fun main() {
     val config = ApplicationConfig("application.conf")
@@ -21,12 +24,19 @@ fun Application.module(config: ApplicationConfig) {
     // Запускаем миграции
     DatabaseFactory.migrateDatabase(config)
 
-    log.info("Auth Service is running on port ${config.property("ktor.deployment.port")}")
+    log.info("Auth Service is running!")
+
+    val keycloak = KeycloakSettings.create(config)
+
+    // подключаем Keycloak
+    configureKeycloakAuth(keycloak)
 
     // Роутинг
     routing {
         get("/") {
             call.respondText("Auth Service is running!")
         }
+
+        authRoutes(keycloak)
     }
 }
