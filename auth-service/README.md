@@ -186,3 +186,18 @@ keycloak-admin-client, kotlinx.serialization
 Когда закончишь `auth-service`, перейдём к `notification-service` с MailHog и тестовыми письмами.
 
 Если хочешь — могу помочь с `docker-compose.yml` или первым миграционным скриптом.
+
+
+## Настройка Keycloak
+
+1. Создать Realm
+2. Создать Client
+  - Client ID: ksb-auth-service-client
+  - Client Protocol: openid-connect
+  - Authentication flow: Standard flow
+  - включить "Client authentication"
+  - "Access Type" = "confidential"
+  - В "Valid Redirect URIs" укажите URL вашего приложения (например, http://localhost:9001/*)
+
+3. Создать пользователя
+4. Сгенерировать токен
