@@ -6,6 +6,7 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.routing.*
 import io.ktor.server.response.*
+import lev.learn.sandbox.notification.service.route.configureNotificationRouting
 
 fun main() {
     val config = ApplicationConfig("application.conf")
@@ -17,5 +18,7 @@ fun main() {
                 call.respondText("Notification Service is running!")
             }
         }
+
+        configureNotificationRouting()
     }.start(wait = true)
 }
