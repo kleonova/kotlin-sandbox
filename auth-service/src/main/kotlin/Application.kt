@@ -22,11 +22,10 @@ fun main() {
 
 fun Application.module(config: ApplicationConfig) {
     // Запускаем миграции
-    DatabaseFactory.migrateDatabase(config)
+    DatabaseFactory.init(config)
+    val keycloak = KeycloakSettings.create(config)
 
     log.info("Auth Service is running!")
-
-    val keycloak = KeycloakSettings.create(config)
 
     // подключаем Keycloak
     configureKeycloakAuth(keycloak)

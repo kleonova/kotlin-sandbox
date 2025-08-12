@@ -32,6 +32,12 @@ dependencies {
     // HikariCP
     implementation(libs.hikari)
 
+    // Exposed
+    implementation(libs.exposed.core)
+    implementation(libs.exposed.dao)
+    implementation(libs.exposed.jdbc)
+    implementation(libs.exposed.java.time)
+
     // Flyway
     implementation(libs.flyway)
     implementation(libs.flyway.postgresql)

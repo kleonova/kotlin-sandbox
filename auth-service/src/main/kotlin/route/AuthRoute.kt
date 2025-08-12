@@ -24,6 +24,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import kotlinx.serialization.json.Json
+import lev.learn.sandbox.auth.service.controller.UserController
 import lev.learn.sandbox.auth.service.model.LoginRequest
 import lev.learn.sandbox.auth.service.model.TokenResponse
 import lev.learn.sandbox.auth.service.security.KeycloakSettings
@@ -38,6 +39,8 @@ val httpClient = HttpClient(CIO) {
         })
     }
 }
+
+val controller = UserController()
 
 fun Route.authRoutes(keycloak: KeycloakSettings) {
     install(ContentNegotiation) {
@@ -58,6 +61,8 @@ fun Route.authRoutes(keycloak: KeycloakSettings) {
                 append("username", req.username)
                 append("password", req.password)
                 append("grant_type", "password")
+                append("scope", "openid profile email")
+
                 if (keycloak.clientSecret.isNotEmpty()) {
                     append("client_secret", keycloak.clientSecret)
                 }
@@ -66,6 +71,7 @@ fun Route.authRoutes(keycloak: KeycloakSettings) {
 
         if (response.status == HttpStatusCode.OK) {
             val token: TokenResponse = response.body()
+            controller.registerOrAuthenticate(token.idToken)
             call.respond(token)
         } else {
             call.respondText("Invalid credentials", status = HttpStatusCode.Unauthorized)
