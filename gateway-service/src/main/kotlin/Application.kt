@@ -1,4 +1,4 @@
-package lev.learn.sandbox.file.receiver
+package lev.learn.sandbox.gateway.service
 
 import io.ktor.server.application.*
 import io.ktor.server.config.*
@@ -14,7 +14,7 @@ fun main() {
     embeddedServer(Netty, port = port) {
         routing {
             get("/") {
-                call.respondText("File Receiver Service is running!")
+                call.respondText("Gateway Service is running!")
             }
         }
     }.start(wait = true)

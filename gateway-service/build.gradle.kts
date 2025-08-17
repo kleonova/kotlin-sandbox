@@ -4,8 +4,8 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") // Линтер
 }
 
-group = "lev.learn.sandbox.file.receiver"
-version = "unspecified"
+group = "lev.learn.sandbox.gateway.service"
+version = "0.1"
 
 dependencies {
     implementation(mylibs.ktor.server.core)
@@ -17,7 +17,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("io.ktor.server.netty.EngineMain")
+    mainClass.set("lev.learn.sandbox.gateway.service.ApplicationKt")
 }
 
 // Настройки Ktlint

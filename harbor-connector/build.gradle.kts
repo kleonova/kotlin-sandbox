@@ -22,7 +22,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("io.ktor.server.netty.EngineMain")
+    mainClass.set("lev.learn.sandbox.harbor.connector.ApplicationKt")
 }
 
 // Настройки Ktlint
