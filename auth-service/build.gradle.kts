@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.serialization)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.shadow)
+    alias(libs.plugins.cyclonedx.bom)
 }
 
 group = "lev.learn.sandbox.auth.service"
@@ -49,4 +50,11 @@ dependencies {
 
 application {
     mainClass.set("lev.learn.sandbox.auth.service.ApplicationKt")
+}
+
+tasks.cyclonedxBom {
+    setProjectType("application")
+    setOutputFormat("json")
+    setOutputName("kotlin-sandbox-auth-service")
+    setIncludeConfigs(listOf("runtimeClasspath"))
 }

@@ -1,17 +1,18 @@
 [versions]
-kotlin = "2.1.21"
-ktor = "2.3.13"
-logback = "1.4.14"
+cyclonedx-bom = "2.3.1"
+exposed = "0.43.0"
+flyway = "11.1.0"
+hikari = "5.0.1"
 kotest = "5.8.1"
-serialization-json = "1.6.3"
+kotlin = "2.1.21"
 kotlinx-datetime = "0.6.0"
 ktlint = "11.6.1"
-typesafe-config="1.4.3"
-shadow = "8.1.1"
-hikari = "5.0.1"
+ktor = "2.3.13"
+logback = "1.4.14"
 postgres = "42.7.7"
-flyway = "11.1.0"
-exposed = "0.43.0"
+serialization-json = "1.6.3"
+shadow = "8.1.1"
+typesafe-config="1.4.3"
 
 [libraries]
 # Ktor
@@ -70,4 +71,5 @@ ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin"}
+serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+cyclonedx-bom = { id = "org.cyclonedx.bom", version.ref = "cyclonedx-bom" }
