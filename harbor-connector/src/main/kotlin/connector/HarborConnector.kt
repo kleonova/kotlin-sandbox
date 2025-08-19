@@ -12,6 +12,7 @@ import io.ktor.client.request.head
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.header
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsChannel
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.utils.io.errors.IOException
@@ -21,6 +22,7 @@ import kotlinx.coroutines.runBlocking
 import lev.learn.sandbox.harbor.connector.config.ConfigLoader
 import lev.learn.sandbox.harbor.connector.model.DockerRequest
 import lev.learn.sandbox.harbor.connector.model.DockerRequestHeader
+import lev.learn.sandbox.harbor.connector.response.ConnectorResponse
 import lev.learn.sandbox.harbor.connector.response.DockerResponse
 import lev.learn.sandbox.harbor.connector.response.DockerResponseBase
 import org.slf4j.LoggerFactory
@@ -140,6 +142,27 @@ class HarborConnector {
         executeRequest(req.copy(headers = headers), HttpMethod.Get, "GET blob") {
             withHeaders(req.headers)
         }
+    }
+
+    suspend fun getRange(url: String, rangeHeader: String): ConnectorResponse {
+        logger.info("Connector → запрос $url с Range=$rangeHeader")
+
+        val fullPath = "$harborUrl/v2/$url"
+
+        val response: HttpResponse = client.get(fullPath) {
+            header(HttpHeaders.Range, rangeHeader)
+        }
+
+        logger.info("Connector → статус=${response.status}, headers=${response.headers}")
+
+        response.headers.forEach { key, values ->
+            logger.debug("Response header: $key - ${values.joinToString(",")}")
+        }
+
+        return ConnectorResponse(
+            channel = response.bodyAsChannel(),
+            headers = response.headers
+        )
     }
 
     private fun shouldRetry(e: Throwable): Boolean {

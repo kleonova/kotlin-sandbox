@@ -1,10 +1,23 @@
 package lev.learn.sandbox.harbor.connector.service
 
 import io.ktor.http.HttpHeaders
+import io.ktor.http.headersOf
+import io.ktor.utils.io.ByteChannel
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.ByteWriteChannel
+import io.ktor.utils.io.cancel
+import io.ktor.utils.io.close
+import io.ktor.utils.io.copyTo
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import lev.learn.sandbox.harbor.connector.config.ConfigLoader
 import lev.learn.sandbox.harbor.connector.connector.HarborConnector
 import lev.learn.sandbox.harbor.connector.model.DockerRequest
 import lev.learn.sandbox.harbor.connector.model.DockerRequestHeader
+import lev.learn.sandbox.harbor.connector.response.ClientGetResponse
 import lev.learn.sandbox.harbor.connector.response.DockerResponse
 import lev.learn.sandbox.harbor.connector.response.DockerResponseChunked
 
@@ -92,6 +105,50 @@ class DockerService {
         return DockerResponseChunked(firstResponse, ranges, request, connector)
     }
 
+    suspend fun getBlob(
+        request: DockerRequest,
+        action: suspend (ClientGetResponse) -> Unit
+    ) {
+        val chunkSize = 1 * 1024 * 1024
+        val totalSize = 28230270 // допустим, знаем размер 26,9 MB
+        val ranges: List<String> = (0 until totalSize step chunkSize).map { start ->
+            val end = (start + chunkSize - 1).coerceAtMost(totalSize - 1)
+            "bytes=$start-$end"
+        }
+
+        val resultChannel = ByteChannel(autoFlush = true)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                for (range in ranges) {
+                    val connectorResponse = connector.getRange(request.path, range)
+                    val lengthResponse = connectorResponse.headers[HttpHeaders.ContentLength]?.toLong()
+                        ?: error("Нет Content-Length в ответе")
+
+                    logger.info("Service → стримим $range в общий канал размером $lengthResponse")
+
+                    val copied = connectorResponse.channel.copyTo(resultChannel, limit = lengthResponse)
+                    logger.info("✓ copyTo finish, реально скопировано $copied байт")
+                }
+            } catch (e: CancellationException) {
+                logger.error("Service → отмена ${e.message}")
+                throw e
+            } finally {
+                logger.info("Service → закрываем канал")
+                resultChannel.close()
+            }
+        }
+
+        // наружу отдаём стрим (пока копирование идёт в фоне)
+        action(
+            ClientGetResponse(
+                resultChannel,
+                headersOf(HttpHeaders.ContentLength, totalSize.toString())
+            )
+        )
+    }
+
+
     private fun generateRanges(start: Long, total: Long): List<String> {
         val ranges = mutableListOf<String>()
         var current = start
@@ -101,5 +158,17 @@ class DockerService {
             current = end + 1
         }
         return ranges
+    }
+
+    suspend fun copyExactLength(src: ByteReadChannel, dst: ByteWriteChannel, length: Long) {
+        var remaining = length
+        while (remaining > 0) {
+            val packet = src.readRemaining(minOf(8192, remaining))
+            val size = packet.remaining.toLong()
+            if (size == 0L) break
+            dst.writePacket(packet)
+            remaining -= size
+        }
+        dst.flush()
     }
 }
