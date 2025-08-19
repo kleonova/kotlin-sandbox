@@ -8,6 +8,7 @@ import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.cancel
 import io.ktor.utils.io.close
 import io.ktor.utils.io.copyTo
+import io.ktor.utils.io.writer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -110,44 +111,35 @@ class DockerService {
         action: suspend (ClientGetResponse) -> Unit
     ) {
         val chunkSize = 1 * 1024 * 1024
-        val totalSize = 28230270 // допустим, знаем размер 26,9 MB
-        val ranges: List<String> = (0 until totalSize step chunkSize).map { start ->
+        val totalSize = 28230270 // знаем общий размер
+
+        val ranges = (0 until totalSize step chunkSize).map { start ->
             val end = (start + chunkSize - 1).coerceAtMost(totalSize - 1)
             "bytes=$start-$end"
         }
 
-        val resultChannel = ByteChannel(autoFlush = true)
-
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
+        coroutineScope {
+            val channel: ByteReadChannel = writer {
                 for (range in ranges) {
                     val connectorResponse = connector.getRange(request.path, range)
                     val lengthResponse = connectorResponse.headers[HttpHeaders.ContentLength]?.toLong()
                         ?: error("Нет Content-Length в ответе")
 
-                    logger.info("Service → стримим $range в общий канал размером $lengthResponse")
+                    logger.info("Service → стримим $range, ожидаем $lengthResponse байт")
 
-                    val copied = connectorResponse.channel.copyTo(resultChannel, limit = lengthResponse)
-                    logger.info("✓ copyTo finish, реально скопировано $copied байт")
+                    val copied = connectorResponse.channel.copyTo(channel, limit = lengthResponse)
+                    logger.info("✓ скопировано $copied байт")
                 }
-            } catch (e: CancellationException) {
-                logger.error("Service → отмена ${e.message}")
-                throw e
-            } finally {
-                logger.info("Service → закрываем канал")
-                resultChannel.close()
-            }
-        }
+            }.channel
 
-        // наружу отдаём стрим (пока копирование идёт в фоне)
-        action(
-            ClientGetResponse(
-                resultChannel,
-                headersOf(HttpHeaders.ContentLength, totalSize.toString())
+            action(
+                ClientGetResponse(
+                    channel,
+                    headersOf(HttpHeaders.ContentLength, totalSize.toString())
+                )
             )
-        )
+        }
     }
-
 
     private fun generateRanges(start: Long, total: Long): List<String> {
         val ranges = mutableListOf<String>()
