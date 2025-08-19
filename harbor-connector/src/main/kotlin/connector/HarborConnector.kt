@@ -123,38 +123,37 @@ class HarborConnector {
         }
     }
 
-    fun requestHead(req: DockerRequest.Head): DockerResponse = runBlocking {
-        executeRequest(req, HttpMethod.Head, "HEAD") {
-            withHeaders(req.headers)
+    fun requestHead(request: DockerRequest.Head): DockerResponse = runBlocking {
+        executeRequest(request, HttpMethod.Head, "HEAD") {
+            withHeaders(request.headers)
         }
     }
 
-    fun requestManifest(req: DockerRequest.Manifest): DockerResponse = runBlocking {
-        executeRequest(req, HttpMethod.Get, "GET manifest") {
-            withHeaders(req.headers)
+    fun requestManifest(request: DockerRequest.Manifest): DockerResponse = runBlocking {
+        executeRequest(request, HttpMethod.Get, "GET manifest") {
+            withHeaders(request.headers)
         }
     }
 
-    fun requestBlob(req: DockerRequest.Blob): DockerResponse = runBlocking {
-        val headers = req.headers
+    fun requestBlob(request: DockerRequest.Blob): DockerResponse = runBlocking {
+        val headers = request.headers
             .filterNot { it.key == HttpHeaders.AcceptEncoding }
 
-        executeRequest(req.copy(headers = headers), HttpMethod.Get, "GET blob") {
-            withHeaders(req.headers)
+        executeRequest(request.copy(headers = headers), HttpMethod.Get, "GET blob") {
+            withHeaders(request.headers)
         }
     }
 
-    suspend fun getRange(url: String, rangeHeader: String): ConnectorResponse {
-        logger.info("Connector → запрос $url с Range=$rangeHeader")
+    suspend fun getRange(request: DockerRequest.Blob): ConnectorResponse {
+        logger.info("Connector → запрос ${request.path}")
 
-        val fullPath = "$harborUrl/v2/$url"
+        val fullPath = "$harborUrl/v2/${request.path}"
 
         val response: HttpResponse = client.get(fullPath) {
-            header(HttpHeaders.Range, rangeHeader)
+            withHeaders(request.headers)
         }
 
-        logger.info("Connector → статус=${response.status}, headers=${response.headers}")
-
+        logger.info("Connector → статус=${response.status}, path=${request.path}")
         response.headers.forEach { key, values ->
             logger.debug("Response header: $key - ${values.joinToString(",")}")
         }

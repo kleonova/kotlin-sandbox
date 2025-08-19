@@ -1,9 +1,6 @@
 package lev.learn.sandbox.harbor.connector.controller
 
-import io.ktor.http.ContentType
 import io.ktor.server.application.ApplicationCall
-import io.ktor.server.response.respondBytesWriter
-import io.ktor.utils.io.copyTo
 import lev.learn.sandbox.harbor.connector.model.DockerRequest
 import lev.learn.sandbox.harbor.connector.model.DockerRequestHeader
 import lev.learn.sandbox.harbor.connector.response.ClientGetResponse
@@ -43,15 +40,10 @@ class DockerController {
         return service.forwardManifest(request)
     }
 
-    fun handleBlob(request: DockerRequest.Blob): DockerResponse {
-        logger.info("Controller: handleBlob $request")
-        return service.downloadBlob(request)
-    }
-
-    suspend fun handleStreamBlob(request: DockerRequest, action: suspend (ClientGetResponse) -> Unit) {
+    suspend fun handleStreamBlob(request: DockerRequest.Blob, action: suspend (ClientGetResponse) -> Unit) {
         logger.info("Controller: handleStreamBlob ${request.path}")
 
-        service.getBlob(request) {
+        service.downloadBlob(request) {
             println("Controller →")
             action(it)
         }
