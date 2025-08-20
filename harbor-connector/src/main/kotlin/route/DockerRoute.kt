@@ -3,15 +3,17 @@ package lev.learn.sandbox.harbor.connector.route
 import org.slf4j.LoggerFactory
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.OutgoingContent
 import io.ktor.server.application.call
 import io.ktor.server.request.path
 import io.ktor.server.response.respond
-import io.ktor.server.response.respondBytesWriter
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.head
 import io.ktor.server.routing.route
+import io.ktor.utils.io.ByteWriteChannel
+import io.ktor.utils.io.copyAndClose
 import lev.learn.sandbox.harbor.connector.controller.DockerController
 import lev.learn.sandbox.harbor.connector.model.DockerRequest
 import lev.learn.sandbox.harbor.connector.response.DockerResponseBase
@@ -46,21 +48,18 @@ fun Route.harborConnectorRoutes() {
             } else {
                 val request = controller.buildRequest(call, "GET_BLOB")
 
-                call.respondBytesWriter(contentType = ContentType.Application.OctetStream) {
-                    logger.info("Route → начинаем писать клиенту")
-                    controller.handleStreamBlob(request as DockerRequest.Blob) { response ->
-                        logger.info("Route → получили response, начинаем копирование")
+                call.respond(object : OutgoingContent.WriteChannelContent() {
+                    override val contentType = ContentType.Application.OctetStream
 
-                        val buffer = ByteArray(8192)
-                        var read: Int
-                        while (true) {
-                            read = response.channel.readAvailable(buffer, 0, buffer.size)
-                            if (read <= 0) break
-                            writeFully(buffer, 0, read)
+                    override suspend fun writeTo(channel: ByteWriteChannel) {
+                        logger.info("Route → начинаем писать клиенту")
+                        controller.handleStreamBlob(request as DockerRequest.Blob) { response ->
+                            logger.info("Route → получили response, начинаем копирование")
+                            response.channel.copyAndClose(channel)
+                            logger.info("Route → копирование завершено")
                         }
-                        logger.info("Route → копирование завершено")
                     }
-                }
+                })
             }
         }
 
