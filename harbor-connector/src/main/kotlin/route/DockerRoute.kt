@@ -48,18 +48,16 @@ fun Route.harborConnectorRoutes() {
             } else {
                 val request = controller.buildRequest(call, "GET_BLOB")
 
-                call.respond(object : OutgoingContent.WriteChannelContent() {
-                    override val contentType = ContentType.Application.OctetStream
+                controller.handleStreamBlob(request as DockerRequest.Blob) { response ->
+                    call.respond(object : OutgoingContent.WriteChannelContent() {
+                        override val contentType = ContentType.Application.OctetStream
+                        override val headers = response.headers
 
-                    override suspend fun writeTo(channel: ByteWriteChannel) {
-                        logger.info("Route → начинаем писать клиенту")
-                        controller.handleStreamBlob(request as DockerRequest.Blob) { response ->
-                            logger.info("Route → получили response, начинаем копирование")
+                        override suspend fun writeTo(channel: ByteWriteChannel) {
                             response.channel.copyAndClose(channel)
-                            logger.info("Route → копирование завершено")
                         }
-                    }
-                })
+                    })
+                }
             }
         }
 
