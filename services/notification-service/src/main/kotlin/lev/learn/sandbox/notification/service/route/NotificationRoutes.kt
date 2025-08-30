@@ -14,6 +14,7 @@ import jakarta.mail.internet.InternetAddress
 import jakarta.mail.internet.MimeMessage
 import kotlinx.serialization.json.Json
 import lev.learn.sandbox.notification.service.model.NotificationRequest
+import java.util.Properties
 
 fun Application.configureNotificationRouting() {
     install(ContentNegotiation) {
@@ -26,7 +27,6 @@ fun Application.configureNotificationRouting() {
         post("/notify") {
             val request = call.receive<NotificationRequest>()
 
-            // Отправляем письмо через SMTP (в MailHog)
             try {
                 sendEmail(
                     to = request.to,
@@ -43,7 +43,7 @@ fun Application.configureNotificationRouting() {
 
 // Простая реализация отправки через javax.mail
 private fun sendEmail(to: String, subject: String, body: String) {
-    val props = java.util.Properties().apply {
+    val props = Properties().apply {
         put("mail.smtp.host", "localhost")
         put("mail.smtp.port", "1025") // MailHog SMTP-порт
         put("mail.smtp.connectiontimeout", "5000")
