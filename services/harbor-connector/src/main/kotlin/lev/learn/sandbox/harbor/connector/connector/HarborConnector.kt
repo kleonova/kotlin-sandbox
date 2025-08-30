@@ -4,6 +4,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.HttpTimeoutConfig
 import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.providers.BasicAuthCredentials
 import io.ktor.client.plugins.auth.providers.basic
@@ -15,6 +16,7 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
 import io.ktor.utils.io.errors.IOException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
@@ -29,6 +31,7 @@ import org.slf4j.LoggerFactory
 
 class HarborConnector {
     private companion object {
+        const val CONNECTION_TIMEOUT_MS = 30_000L
         private val config by lazy { ConfigLoader.loadHarborConfig() }
 
         private val harborUrl = config.baseUrl
@@ -37,15 +40,21 @@ class HarborConnector {
         private val requestTimeout = config.requestTimeoutMs
         private val maxRetries = config.maxRetries
         private val delayBetweenRetriesMs: Long = config.delayBetweenRetriesMs
-    }
 
+        val FORBIDDEN_HTTP_STATUSES = listOf(
+            HttpStatusCode.BadRequest.value,
+            HttpStatusCode.Unauthorized.value,
+            HttpStatusCode.Forbidden.value,
+            HttpStatusCode.NotFound.value
+        )
+    }
 
     private val logger = LoggerFactory.getLogger("HarborConnector")
     private val client = HttpClient(CIO) {
         install(HttpTimeout) {
             requestTimeoutMillis = requestTimeout // 0 = бесконечно, HttpTimeout.INFINITE_TIMEOUT_MS
-            connectTimeoutMillis = 30_000 // подключение 30 сек
-            socketTimeoutMillis = HttpTimeout.INFINITE_TIMEOUT_MS // читаем сколько угодно
+            connectTimeoutMillis = CONNECTION_TIMEOUT_MS // подключение 30 сек
+            socketTimeoutMillis = HttpTimeoutConfig.INFINITE_TIMEOUT_MS // читаем сколько угодно
         }
 
         install(Auth) {
@@ -87,7 +96,7 @@ class HarborConnector {
                     logger.debug("Response header: $key - ${values.joinToString(",")}")
                 }
 
-                if (status in listOf(400, 401, 403, 404)) {
+                if (status in FORBIDDEN_HTTP_STATUSES) {
                     logger.error("$logPrefix | client error: $status")
                     throw ClientRequestException(response, "") // выбрасываем дальше
                 }

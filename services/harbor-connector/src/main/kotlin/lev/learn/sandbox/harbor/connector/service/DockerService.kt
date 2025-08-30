@@ -4,6 +4,7 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.availableForRead
 import io.ktor.utils.io.copyTo
 import io.ktor.utils.io.writer
 import kotlinx.coroutines.coroutineScope

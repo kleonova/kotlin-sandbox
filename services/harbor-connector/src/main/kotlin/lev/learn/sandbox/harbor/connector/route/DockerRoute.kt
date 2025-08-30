@@ -4,7 +4,6 @@ import org.slf4j.LoggerFactory
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
-import io.ktor.server.application.call
 import io.ktor.server.request.path
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
