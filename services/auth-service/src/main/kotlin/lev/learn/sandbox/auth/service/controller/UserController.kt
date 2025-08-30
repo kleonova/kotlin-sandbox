@@ -48,7 +48,6 @@ class UserController {
                     is JsonPrimitive -> value.content
                     is JsonObject -> value.toString()
                     is JsonArray -> value.toString()
-                    null -> null
                 }
             }
         } catch (e: Exception) {

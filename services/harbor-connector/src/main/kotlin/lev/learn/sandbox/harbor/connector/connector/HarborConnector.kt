@@ -144,15 +144,6 @@ class HarborConnector {
         }
     }
 
-    fun requestBlob(request: DockerRequest.Blob): DockerResponse = runBlocking {
-        val headers = request.headers
-            .filterNot { it.key == HttpHeaders.AcceptEncoding }
-
-        executeRequest(request.copy(headers = headers), HttpMethod.Get, "GET blob") {
-            withHeaders(request.headers)
-        }
-    }
-
     suspend fun getRange(request: DockerRequest.Blob): ConnectorResponse {
         logger.info("Connector → запрос ${request.path}")
 
