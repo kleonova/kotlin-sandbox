@@ -3,6 +3,7 @@ package lev.learn.sandbox.harbor.connector.response
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.readBytes
+import io.ktor.client.statement.readRawBytes
 import io.ktor.http.Headers
 import io.ktor.http.HeadersBuilder
 import io.ktor.http.HttpHeaders
@@ -74,7 +75,7 @@ class DockerResponseBase(
         }
 
         if (!stream) {
-            val bytes = response.readBytes()
+            val bytes = response.readRawBytes()
             headersBuilder[HttpHeaders.ContentLength] = bytes.size.toString()
             call.setHeaders(headersBuilder.build())
             call.respondBytes(bytes, status = statusCode)
