@@ -1,7 +1,6 @@
 plugins {
     application
-//    alias(libs.plugins.serialization)
-//    alias(libs.plugins.shadow)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 group = "lev.learn.sandbox.notification.service"
@@ -16,11 +15,11 @@ dependencies {
     implementation(libs.ktor.server.netty)
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.server.status.pages)
+    implementation(libs.ktor.serialization.json)
 
     implementation(libs.serialization.json)
 
-    implementation("com.sun.mail:jakarta.mail:2.0.1")
-    // implementation("com.icegreen:greenmail-junit5:2.0.1")
+    implementation(libs.mail)
 
     testImplementation(libs.kotest.runner)
 }
