@@ -9,8 +9,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.parameters
 import io.ktor.serialization.jackson.jackson
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.application.call
-import io.ktor.server.application.install
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
@@ -28,9 +26,6 @@ import lev.learn.sandbox.auth.service.controller.UserController
 import lev.learn.sandbox.auth.service.model.LoginRequest
 import lev.learn.sandbox.auth.service.model.TokenResponse
 import lev.learn.sandbox.auth.service.security.KeycloakSettings
-import org.slf4j.LoggerFactory
-
-private val logger = LoggerFactory.getLogger("AuthRoute")
 
 val httpClient = HttpClient(CIO) {
     install(ClientContentNegotiation) {  // Используем переименованный импорт

@@ -1,20 +1,26 @@
 package lev.learn.sandbox.auth.service.repository
 
 import lev.learn.sandbox.auth.service.model.User
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 
 class UserRepository {
     fun findByUsername(username: String): User? = transaction {
         UsersTable
-            .select { UsersTable.username eq username }
-            .map(::toUser)
+            .selectAll()
+            .where { UsersTable.username eq username }
+            .map { it.toUser() }
             .singleOrNull()
     }
 
     fun save(user: User): User = transaction {
-        val exists = UsersTable.slice(UsersTable.id)
-            .select { UsersTable.username eq user.username }
+        val exists = UsersTable
+            .select(UsersTable.id)
+            .where { UsersTable.id eq user.id }
             .empty().not()
 
         if (!exists) {
@@ -35,16 +41,17 @@ class UserRepository {
                 it[updatedAt] = user.updatedAt
             }
         }
+
         user
     }
 
-    private fun toUser(row: ResultRow): User = User(
-        id = row[UsersTable.id],
-        username = row[UsersTable.username],
-        email = row[UsersTable.email],
-        firstName = row[UsersTable.firstName],
-        lastName = row[UsersTable.lastName],
-        createdAt = row[UsersTable.createdAt],
-        updatedAt = row[UsersTable.updatedAt]
+    private fun ResultRow.toUser(): User = User(
+        id = this[UsersTable.id],
+        username = this[UsersTable.username],
+        email = this[UsersTable.email],
+        firstName = this[UsersTable.firstName],
+        lastName = this[UsersTable.lastName],
+        createdAt = this[UsersTable.createdAt],
+        updatedAt = this[UsersTable.updatedAt]
     )
 }

@@ -3,8 +3,9 @@ package lev.learn.sandbox.auth.service.service
 import lev.learn.sandbox.auth.service.model.User
 import lev.learn.sandbox.auth.service.repository.UserRepository
 import org.slf4j.LoggerFactory
+import java.time.LocalDateTime
 
-class UserService() {
+class UserService {
     private val userRepository: UserRepository = UserRepository()
     private val logger = LoggerFactory.getLogger("UserService")
 
@@ -19,7 +20,7 @@ class UserService() {
                 email = email ?: existing.email,
                 firstName = firstName ?: existing.firstName,
                 lastName = lastName ?: existing.lastName,
-                updatedAt = java.time.LocalDateTime.now()
+                updatedAt = LocalDateTime.now()
             )
             userRepository.save(updated)
             return updated

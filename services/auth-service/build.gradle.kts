@@ -1,6 +1,6 @@
 plugins {
     application
-    // kotlin("plugin.serialization")
+    alias(libs.plugins.kotlin.serialization)
 }
 
 group = "lev.learn.sandbox.auth.service"
@@ -11,6 +11,9 @@ application {
 }
 
 dependencies {
+    // Kotlin
+    implementation(libs.kotlinx.coroutines)
+
     // Ktor
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)
@@ -21,6 +24,7 @@ dependencies {
     implementation(libs.ktor.serialization.jackson)
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.server.call.logging)
+    implementation(libs.ktor.serialization.json)
 
     // PostgreSQL
     implementation(libs.postgres)
@@ -40,7 +44,4 @@ dependencies {
 
     // Serialization
     implementation(libs.serialization.json)
-
-    // Тесты
-    testImplementation(libs.kotest.runner)
 }

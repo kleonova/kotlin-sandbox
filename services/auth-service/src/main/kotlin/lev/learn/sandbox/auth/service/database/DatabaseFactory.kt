@@ -7,7 +7,6 @@ import io.ktor.server.config.ApplicationConfig
 import org.jetbrains.exposed.sql.Database
 
 object DatabaseFactory {
-
     private var dataSource: HikariDataSource? = null
 
     // Создаём или возвращаем существующий DataSource
@@ -33,7 +32,7 @@ object DatabaseFactory {
     }
 
     private fun createDataSource(config: ApplicationConfig): HikariDataSource {
-        val dbConfig = config.config("database")
+        val dbConfig = config.config("lev/learn/sandbox/auth/service/database")
 
         return HikariConfig().apply {
             driverClassName = getConfig(dbConfig, "driver")

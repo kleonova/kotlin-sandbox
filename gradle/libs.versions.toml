@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.2.10"
-ktor = "3.0.3"
+ktor = "3.2.3"
 serialization = "1.7.2"
 logback = "1.5.6"
 postgres = "42.7.3"
@@ -14,6 +14,9 @@ shadow = "8.1.4"
 cyclonedx = "1.9.1"
 
 [libraries]
+# Kotlin
+kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.10.2" }
+
 # Ktor
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
 ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
@@ -22,7 +25,7 @@ ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt", version.ref = 
 ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
 ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
 ktor-serialization-jackson = { module = "io.ktor:ktor-serialization-jackson", version.ref = "ktor" }
-ktor-serialization-json = { module = "io.ktor:ktor-serialization-json", version.ref = "ktor" }
+ktor-serialization-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
@@ -49,13 +52,13 @@ flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql", versio
 # Serialization
 serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 
+# Mail
+mail = { module = "com.sun.mail:jakarta.mail", version = "2.0.1" }
+
 # Test
 kotest-runner = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
-shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
-cyclonedx-bom = { id = "org.cyclonedx.bom", version.ref = "cyclonedx" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

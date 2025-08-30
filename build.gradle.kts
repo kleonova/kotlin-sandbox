@@ -22,7 +22,9 @@ subprojects {
         "implementation"(kotlin("stdlib"))
         "implementation"(project.rootProject.libs.logback)
 
+        // Тесты
         "testImplementation"(kotlin("test"))
+        "testImplementation"(project.rootProject.libs.kotest.runner)
     }
 
     tasks.withType<Test>().configureEach {
@@ -31,7 +33,7 @@ subprojects {
 
     // Настройка Detekt через расширение
     extensions.configure<DetektExtension> {
-        toolVersion = project.rootProject.libs.versions.logback.get()
+        toolVersion = project.rootProject.libs.versions.detekt.get()
         config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
         // применяет файлы конфигурации поверх файла конфигурации, по умолчанию false
         buildUponDefaultConfig = true

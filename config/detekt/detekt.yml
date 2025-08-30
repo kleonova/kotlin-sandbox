@@ -1,3 +1,8 @@
-build:
-  maxIssues: 0
-  excludeCorrectable: false
+style:
+  WildcardImport:
+    active: false   # отключаем правило
+    excludeImports: [] # можно исключить определённые wildcard импорты, если нужно
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: false
