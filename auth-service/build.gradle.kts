@@ -1,14 +1,14 @@
 plugins {
-    kotlin("jvm")
     application
-    alias(libs.plugins.serialization)
-    alias(libs.plugins.ktlint)
-    alias(libs.plugins.shadow)
-    alias(libs.plugins.cyclonedx.bom)
+    // kotlin("plugin.serialization")
 }
 
 group = "lev.learn.sandbox.auth.service"
 version = "0.1"
+
+application {
+    mainClass.set("lev.learn.sandbox.auth.service.ApplicationKt")
+}
 
 dependencies {
     // Ktor
@@ -19,13 +19,8 @@ dependencies {
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.jackson)
-    implementation(libs.ktor.serialization.json)
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.server.call.logging)
-    implementation(libs.serialization.json)
-
-    // Logging
-    implementation(libs.logback)
 
     // PostgreSQL
     implementation(libs.postgres)
@@ -43,18 +38,9 @@ dependencies {
     implementation(libs.flyway)
     implementation(libs.flyway.postgresql)
 
+    // Serialization
+    implementation(libs.serialization.json)
+
     // Тесты
     testImplementation(libs.kotest.runner)
-    testImplementation(libs.ktor.server.test)
-}
-
-application {
-    mainClass.set("lev.learn.sandbox.auth.service.ApplicationKt")
-}
-
-tasks.cyclonedxBom {
-    setProjectType("application")
-    setOutputFormat("json")
-    setOutputName("kotlin-sandbox-auth-service")
-    setIncludeConfigs(listOf("runtimeClasspath"))
 }

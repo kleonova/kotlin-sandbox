@@ -1,36 +1,21 @@
 plugins {
-    kotlin("jvm")
     application
-    id("org.jlleitschuh.gradle.ktlint") // Линтер
 }
 
 group = "lev.learn.sandbox.harbor.connector"
-version = "unspecified"
-
-dependencies {
-    implementation(mylibs.ktor.server.core)
-    implementation(mylibs.ktor.server.netty)
-    implementation(mylibs.ktor.server.call.logging)
-    implementation(mylibs.ktor.server.auth)
-    implementation(mylibs.ktor.client.core)
-    implementation(mylibs.ktor.client.cio)
-    implementation(mylibs.ktor.client.auth)
-    implementation(mylibs.logback)
-    implementation(mylibs.typesafe.config)
-
-    testImplementation(mylibs.kotest.runner)
-}
+version = "1.0"
 
 application {
     mainClass.set("lev.learn.sandbox.harbor.connector.ApplicationKt")
 }
 
-// Настройки Ktlint
-ktlint {
-    verbose.set(true)
-}
-
-// Настройки для Kotest
-tasks.withType<Test> {
-    useJUnitPlatform()
+dependencies {
+    implementation(libs.ktor.server.core)
+    implementation(libs.ktor.server.netty)
+    implementation(libs.ktor.server.call.logging)
+    implementation(libs.ktor.server.auth)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.auth)
+    // implementation(libs.typesafe.config)
 }

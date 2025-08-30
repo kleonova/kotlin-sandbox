@@ -1,59 +1,39 @@
 [versions]
-cyclonedx-bom = "2.3.1"
-exposed = "0.43.0"
-flyway = "11.1.0"
-hikari = "5.0.1"
-kotest = "5.8.1"
-kotlin = "2.1.21"
-kotlinx-datetime = "0.6.0"
-ktlint = "11.6.1"
-ktor = "2.3.13"
-logback = "1.4.14"
-postgres = "42.7.7"
-serialization-json = "1.6.3"
-shadow = "8.1.1"
-typesafe-config="1.4.3"
+kotlin = "2.2.10"
+ktor = "3.0.3"
+serialization = "1.7.2"
+logback = "1.5.6"
+postgres = "42.7.3"
+hikari = "5.1.0"
+exposed = "0.61.0"
+flyway = "10.15.0"
+ktlint = "12.1.1"
+detekt = "1.23.8"
+kotest = "5.9.1"
+shadow = "8.1.4"
+cyclonedx = "1.9.1"
 
 [libraries]
 # Ktor
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
 ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
-ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
 ktor-server-auth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" }
 ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt", version.ref = "ktor" }
-
-ktor-server-content-negotiation = { group = "io.ktor", name = "ktor-server-content-negotiation", version.ref = "ktor" }
-ktor-server-status-pages = { group = "io.ktor", name = "ktor-server-status-pages", version.ref = "ktor" }
-
-ktor-serialization-jackson = { group = "io.ktor", name = "ktor-serialization-jackson", version.ref = "ktor" }
-ktor-serialization-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
-
+ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
+ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
+ktor-serialization-jackson = { module = "io.ktor:ktor-serialization-jackson", version.ref = "ktor" }
+ktor-serialization-json = { module = "io.ktor:ktor-serialization-json", version.ref = "ktor" }
+ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor" }
-ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
-ktor-client-apache = { module = "io.ktor:ktor-client-apache", version.ref = "ktor" }
-ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
-
-
-ktor-server-test = { module = "io.ktor:ktor-server-tests", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 
 # Logging
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 
-# Kotest (тесты)
-kotest-runner = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
-
-# Serialization
-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization-json" }
-kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
-
-# Read Config
-typesafe-config = { group = "com.typesafe", name = "config", version.ref = "typesafe-config" }
-
-# PostgreSQL
+# Database
 postgres = { module = "org.postgresql:postgresql", version.ref = "postgres" }
-
-# HikariCP
 hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
 
 # Exposed
@@ -66,10 +46,16 @@ exposed-java-time = { module = "org.jetbrains.exposed:exposed-java-time", versio
 flyway = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
 flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
 
+# Serialization
+serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
+
+# Test
+kotest-runner = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+
 [plugins]
-ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-cyclonedx-bom = { id = "org.cyclonedx.bom", version.ref = "cyclonedx-bom" }
+cyclonedx-bom = { id = "org.cyclonedx.bom", version.ref = "cyclonedx" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
