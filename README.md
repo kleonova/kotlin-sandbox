@@ -10,15 +10,9 @@
 |----------------------|------|--------------------------------------------------------------------------------------------------|
 | gateway-service      | 9000 | Центральная точка входа, маршрутизирует запросы к внутренним сервисам                            |
 | auth-service         | 9001 | Аутентификация через Keycloak, управление пользователями (регистрация, профиль), интеграция с БД |
-| notification-service | 9002 | Отправка писем                                                                                   |
+| notification-service | 9002 | Отправка уведомлений                                                                             |
 | harbor-connector     | 9010 | Proxy-сервис для получение данных Docker из Harbor                                               |
-| kafka                |      | todo                                                                                             |
-| postgres             |      | todo                                                                                             |
-| tarantool            |      | todo                                                                                             |
-| redis                |      | todo                                                                                             |
-| mailhog              |      | todo                                                                                             |
-| keycloak             |      | todo                                                                                             |
-
+                                                                                           |
 ---
 
 ## Технологии
@@ -26,7 +20,26 @@
 - **Kotlin** — язык программирования
 - **Ktor** — фреймворк
 
+### Транспорт
+- GraphQL
+- WebSocket
+- RabbitMQ
+- Kafka
+- Camel
+
+### Базы данных
+- Postgres
+- Tarantool
+- Redis
+
+### Другие инструменты
+- Keycloak
+- Mailhog
+
 ---
 
 ## 
+
+---
+
 
