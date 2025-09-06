@@ -1,7 +1,5 @@
 package lev.learn.sandbox.harbor.connector.config
 
-import io.ktor.client.plugins.HttpTimeoutConfig
-
 data class HarborConfig(
     val baseUrl: String,
     val user: String,
