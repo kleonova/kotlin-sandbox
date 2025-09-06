@@ -26,6 +26,8 @@
 - RabbitMQ
 - Kafka
 - Camel
+- Nats
+- gRPC
 
 ### Базы данных
 - Postgres
