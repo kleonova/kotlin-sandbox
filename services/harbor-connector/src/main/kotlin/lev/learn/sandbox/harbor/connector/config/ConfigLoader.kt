@@ -12,8 +12,8 @@ object ConfigLoader {
             baseUrl = harborConfig.getString("baseUrl"),
             user = harborConfig.getString("user"),
             password = harborConfig.getString("password"),
-            requestTimeoutMs = if (harborConfig.hasPath("requestTimeoutMs")) {
-                harborConfig.getLong("requestTimeoutMs")
+            socketTimeoutMs = if (harborConfig.hasPath("socketTimeoutMs")) {
+                harborConfig.getInt("socketTimeoutMs")
             } else {
                 null // используем значение по умолчанию из data class
             },

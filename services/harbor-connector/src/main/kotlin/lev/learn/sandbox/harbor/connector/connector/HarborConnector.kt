@@ -1,7 +1,7 @@
 package lev.learn.sandbox.harbor.connector.connector
 
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.apache5.Apache5
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.HttpTimeoutConfig
@@ -30,13 +30,11 @@ import org.slf4j.LoggerFactory
 
 class HarborConnector {
     private companion object {
-        const val CONNECTION_TIMEOUT_MS = 30_000L
         private val config by lazy { ConfigLoader.loadHarborConfig() }
 
         private val harborUrl = config.baseUrl
         private val harborLogin = config.user
         private val harborPassword = config.password
-        private val requestTimeout = config.requestTimeoutMs
         private val maxRetries = config.maxRetries
         private val delayBetweenRetriesMs: Long = config.delayBetweenRetriesMs
 
@@ -49,11 +47,18 @@ class HarborConnector {
     }
 
     private val logger = LoggerFactory.getLogger("HarborConnector")
-    private val client = HttpClient(CIO) {
+
+    private val client = HttpClient(Apache5) {
         install(HttpTimeout) {
-            requestTimeoutMillis = requestTimeout // 0 = бесконечно, HttpTimeout.INFINITE_TIMEOUT_MS
-            connectTimeoutMillis = CONNECTION_TIMEOUT_MS // подключение 30 сек
-            socketTimeoutMillis = HttpTimeoutConfig.INFINITE_TIMEOUT_MS // читаем сколько угодно
+            requestTimeoutMillis = HttpTimeoutConfig.INFINITE_TIMEOUT_MS
+            connectTimeoutMillis = HttpTimeoutConfig.INFINITE_TIMEOUT_MS
+            socketTimeoutMillis = HttpTimeoutConfig.INFINITE_TIMEOUT_MS
+        }
+
+        engine {
+            config.socketTimeoutMs?.let {
+                socketTimeout = it
+            }
         }
 
         install(Auth) {
