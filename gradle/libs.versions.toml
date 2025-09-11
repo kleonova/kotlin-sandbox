@@ -1,6 +1,7 @@
 [versions]
 kotlin = "2.2.10"
 ktor = "3.2.3"
+koin="4.1.1"
 serialization = "1.7.2"
 logback = "1.5.6"
 postgres = "42.7.3"
@@ -9,10 +10,16 @@ exposed = "0.61.0"
 flyway = "10.15.0"
 detekt = "1.23.8"
 kotest = "5.9.1"
+ktlint = "13.1.0"
+kafka = "3.9.1"
 
 [libraries]
 # Kotlin
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.10.2" }
+
+# Koin
+koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
+koin-ktor = { module = "io.insert-koin:koin-ktor", version.ref = "koin" }
 
 # Ktor
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
@@ -49,9 +56,13 @@ flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql", versio
 
 # Serialization
 serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
+serialization-jackson = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version = "2.18.0" }
 
 # Mail
 mail = { module = "com.sun.mail:jakarta.mail", version = "2.0.1" }
+
+# Kafka
+kafka-clients = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }
 
 # Test
 kotest-runner = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
@@ -60,3 +71,4 @@ kotest-runner = { module = "io.kotest:kotest-runner-junit5", version.ref = "kote
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }

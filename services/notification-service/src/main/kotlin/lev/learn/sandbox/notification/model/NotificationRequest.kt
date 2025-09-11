@@ -1,4 +1,4 @@
-package lev.learn.sandbox.notification.service.model
+package lev.learn.sandbox.notification.model
 
 import kotlinx.serialization.Serializable
 

@@ -1,14 +1,12 @@
-version: '3.8'
-
 services:
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     command: start-dev
     ports:
-      - "8080:8080"
+      - "8080:8080" # хост:контейнер
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: password
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
     depends_on:
       - postgres_auth
     profiles:
@@ -18,9 +16,9 @@ services:
   postgres_auth:
     image: postgres:16
     environment:
-      POSTGRES_DB: ksb_auth_db
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${POSTGRES_AUTH_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5433:5432"
     volumes:
@@ -30,15 +28,15 @@ services:
       - full
 
   auth-service:
-    build: ./auth-service
+    build: ./services/auth-service
     ports:
       - "9001:9001"
     environment:
       DB_HOST: postgres_auth
       DB_PORT: 5432
-      DB_NAME: ksb_auth_db
-      DB_USER: admin
-      DB_PASSWORD: password
+      DB_NAME: ${POSTGRES_AUTH_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
     depends_on:
       - postgres_auth
       - keycloak
@@ -48,9 +46,9 @@ services:
   postgres_notification:
     image: postgres:16
     environment:
-      POSTGRES_DB: ksb_notification_db
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${POSTGRES_NOTIFICATION_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5434:5432"
     volumes:
@@ -60,15 +58,15 @@ services:
       - full
 
   notification-service:
-    build: ./notification-service
+    build: ./services/notification-service
     ports:
       - "9002:9002"
     environment:
       DB_HOST: postgres_notification
       DB_PORT: 5432
-      DB_NAME: ksb_notification_db
-      DB_USER: admin
-      DB_PASSWORD: password
+      DB_NAME: ${POSTGRES_NOTIFICATION_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
       MAIL_HOST: mailhog
       MAIL_PORT: 1025
     depends_on:
@@ -86,6 +84,83 @@ services:
       - dev
       - full
 
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    profiles:
+      - dev
+      - full
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"   # внешний порт для приложений на хосте
+      - "29092:29092" # внутренний порт для контейнеров
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    profiles:
+      - dev
+      - full
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8082:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    depends_on:
+      - kafka
+    profiles:
+      - dev
+
+  postgres_order:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_ORDER_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_order_data:/var/lib/postgresql/data
+    profiles:
+      - dev
+      - full
+
+  order-service:
+    build: ./services/order-service
+    ports:
+      - "9003:9003"
+    environment:
+      DB_HOST: postgres_order
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_ORDER_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+      - postgres_order
+      - kafka
+    profiles:
+      - full
+
 volumes:
   postgres_auth_data:
   postgres_notification_data:
+  postgres_order_data:
