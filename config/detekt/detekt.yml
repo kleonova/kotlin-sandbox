@@ -1,8 +1,8 @@
 style:
   WildcardImport:
-    active: false   # отключаем правило
-    excludeImports: [] # можно исключить определённые wildcard импорты, если нужно
+    active: false   # выключаем detekt-правило
 
-exceptions:
-  TooGenericExceptionCaught:
-    active: false
+formatting:
+  active: true      # включаем поддержку ktlint-правил
+  NoWildcardImports:
+    active: false   # выключаем ktlint-правило

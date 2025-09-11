@@ -12,3 +12,6 @@ out/
 
 ### Kotlin ###
 .kotlin
+
+### ENV ###
+.env
